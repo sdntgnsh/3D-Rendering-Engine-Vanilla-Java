@@ -76,8 +76,8 @@ public class GUI implements ActionListener, ChangeListener {
                 xySlider.setValue(value - (notches * 2)); // Adjust sensitivity as needed
             }
         });
-        // xzSlider.setBackground(Color.GRAY);
-        // xySlider.setBackground(Color.GRAY);
+        xzSlider.setBackground(Color.GRAY);
+        xySlider.setBackground(Color.GRAY);
 
 
 
@@ -104,11 +104,14 @@ public class GUI implements ActionListener, ChangeListener {
         buttonPanel.add(ClickButton);
         buttonPanel.add(ResetButton);
         buttonPanel.add(ExitButton);
-
+        buttonPanel.setBackground(Color.GRAY);
+        
+        
         // Panel for labels (TOP)
         JPanel topPanel = new JPanel(new GridLayout(2, 1));
         topPanel.add(label);
         topPanel.add(xzLabel);
+        topPanel.setBackground(Color.GRAY);
 
         // Add Components to Frame
         frame.add(topPanel, BorderLayout.NORTH);
