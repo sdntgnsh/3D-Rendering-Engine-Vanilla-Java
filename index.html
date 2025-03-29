@@ -2,15 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>CheerpJ test</title>
+    <title>CheerpJ Test</title>
     <script src="https://cjrtnc.leaningtech.com/3.1/cj3loader.js"></script>
   </head>
   <body>
     <script>
       (async function () {
         await cheerpjInit();
+        // Remove cheerpjCreateDisplay if your app creates its own JFrame.
         cheerpjCreateDisplay(800, 600);
-        await cheerpjRunJar("app.jar", "GUI");
+        await cheerpjRunJar("/app/YourJar.jar"); // Explicitly specify main class if needed.
       })();
     </script>
   </body>
