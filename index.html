@@ -4,15 +4,35 @@
     <meta charset="utf-8" />
     <title>CheerpJ Test</title>
     <script src="https://cjrtnc.leaningtech.com/3.1/cj3loader.js"></script>
+    <style>
+      /* Make sure the page occupies the full window */
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+    </style>
   </head>
   <body>
     <script>
       (async function () {
         await cheerpjInit();
-        // Remove cheerpjCreateDisplay if your app creates its own JFrame.
-        cheerpjCreateDisplay(800, 600);
-        await cheerpjRunJar("/app/src/YourJar.jar"); // Explicitly specify main class if needed.
+        // Use the full width and height of the browser window
+        cheerpjCreateDisplay(window.innerWidth, window.innerHeight);
+        await cheerpjRunJar("/app/src/YourJar.jar");
       })();
+
+      // Optionally, update the display size when the window is resized.
+      window.addEventListener("resize", function() {
+        // If CheerpJ uses a specific display element, update its dimensions.
+        var display = document.getElementById("cheerpjDisplay");
+        if (display) {
+          display.style.width = window.innerWidth + "px";
+          display.style.height = window.innerHeight + "px";
+        }
+      });
     </script>
   </body>
 </html>
