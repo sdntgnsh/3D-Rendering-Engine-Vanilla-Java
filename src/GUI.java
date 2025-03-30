@@ -16,9 +16,10 @@ public class GUI implements ActionListener, ChangeListener {
     public GUI() {
         frame = new JFrame("Main Application");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        // frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setLayout(new BorderLayout());
-        frame.setUndecorated(true);
+        // frame.setUndecorated(true);
+        frame.setSize(1000, 800);
         frame.getContentPane().setBackground(Color.BLACK);
 
 
@@ -151,6 +152,13 @@ public class GUI implements ActionListener, ChangeListener {
     }
 
     public static void main(String[] args) {
+
+        System.out.println("Application starting...");
+        // JFrame frame = new JFrame("Debug Window");
+        // frame.setSize(300, 200);
+        // frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        // frame.add(new JLabel("If you can see this, the app is running!"));
+        // frame.setVisible(true);
         new GUI();
     }
 }
