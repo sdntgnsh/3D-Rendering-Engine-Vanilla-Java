@@ -8,7 +8,7 @@ public class GUI implements ActionListener, ChangeListener {
     private int clicks = 0;
     private JLabel label = new JLabel("Number of clicks:  0");
     private JFrame frame;
-    private JButton ClickButton, ResetButton, ExitButton;
+    private JButton ClickButton, ResetButton, ExitButton, AutoRotateButton;
     private JLabel xzLabel, xyLabel;
     private JSlider xzSlider, xySlider;
     private JPanel renderPanel, xzPanel, xyPanel, sliderPanel;
@@ -28,12 +28,14 @@ public class GUI implements ActionListener, ChangeListener {
 
         // Click, Reset, and Exit Buttons
         ClickButton = new JButton("Click Me");
-        ResetButton = new JButton("Reset");
+        ResetButton = new JButton("Reset"); 
         ExitButton = new JButton("Exit Application");
+        AutoRotateButton = new JButton("↺");
         Dimension buttonSize = new Dimension(400, 150);
         ClickButton.setPreferredSize(buttonSize);
         ResetButton.setPreferredSize(buttonSize);
         ExitButton.setPreferredSize(buttonSize);
+        AutoRotateButton.setPreferredSize(new Dimension(20, 20));
 
         ClickButton.addActionListener(this);
         ResetButton.addActionListener(this);
@@ -41,6 +43,7 @@ public class GUI implements ActionListener, ChangeListener {
 
         ClickButton.setBackground(Color.LIGHT_GRAY);
         ResetButton.setBackground(Color.LIGHT_GRAY);
+        AutoRotateButton.setBackground(Color.LIGHT_GRAY);
         ExitButton.setBackground(Color.RED);
         // Sliders for XZ and XY movement
         xzSlider = new JSlider(JSlider.HORIZONTAL, -50, 50, 0);
@@ -141,6 +144,14 @@ public class GUI implements ActionListener, ChangeListener {
         buttonPanel.add(ResetButton);
         buttonPanel.add(ExitButton);
         buttonPanel.setBackground(Color.GRAY);
+
+        // Ensure button panel matches the render panel height
+        frame.addComponentListener(new ComponentAdapter() {
+            public void componentResized(ComponentEvent e) {
+                buttonPanel.setPreferredSize(new Dimension(400, renderPanel.getHeight()));
+                buttonPanel.revalidate();
+            }
+        });
         
         
         // Panel for labels (TOP)
@@ -148,6 +159,33 @@ public class GUI implements ActionListener, ChangeListener {
         topPanel.add(label);
         topPanel.add(xzLabel);
         topPanel.setBackground(Color.GRAY);
+        
+        // Create a new panel to hold both XZ slider and small button
+        JPanel southPanel = new JPanel(new BorderLayout());
+        southPanel.setOpaque(false);
+        southPanel.setBackground(Color.GRAY);
+        
+        // Create bottom-left panel for the small button
+        JPanel AutoRotatePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        AutoRotatePanel.setOpaque(true); // Ensure background color is visible
+        AutoRotatePanel.setBackground(Color.GRAY);  
+        
+        // Add the XZ slider inside the southPanel
+        southPanel.add(xzSlider, BorderLayout.CENTER);
+        southPanel.add(AutoRotatePanel, BorderLayout.WEST);
+
+
+        AutoRotatePanel.add(AutoRotateButton);
+
+        // Add AutoRotatePanel to the southPanel
+        southPanel.add(AutoRotatePanel, BorderLayout.WEST);
+
+        // Modify sliderPanel to hold the updated southPanel
+        sliderPanel.setLayout(new BorderLayout());
+        sliderPanel.add(xySlider, BorderLayout.WEST);
+        sliderPanel.add(southPanel, BorderLayout.SOUTH); // Keeps both the slider & button
+
+
 
         // Add Components to Frame
         frame.add(topPanel, BorderLayout.NORTH);
