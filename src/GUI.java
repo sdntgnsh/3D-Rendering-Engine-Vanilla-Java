@@ -1,8 +1,15 @@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import java.awt.geom.*;
+
+
+
 
 public class GUI implements ActionListener, ChangeListener {
     private int clicks = 0;
@@ -18,7 +25,7 @@ public class GUI implements ActionListener, ChangeListener {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         // frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setLayout(new BorderLayout());
-        frame.setUndecorated(true);
+        // frame.setUndecorated(true);
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         frame.setSize(screenSize.width, screenSize.height);
@@ -31,7 +38,7 @@ public class GUI implements ActionListener, ChangeListener {
         ResetButton = new JButton("Reset"); 
         ExitButton = new JButton("Exit Application");
         AutoRotateButton = new JButton("↺");
-        Dimension buttonSize = new Dimension(400, 150);
+        Dimension buttonSize = new Dimension(screenSize.width/6, screenSize.width/50);
         ClickButton.setPreferredSize(buttonSize);
         ResetButton.setPreferredSize(buttonSize);
         ExitButton.setPreferredSize(buttonSize);
@@ -112,19 +119,47 @@ public class GUI implements ActionListener, ChangeListener {
                 g2.fillRect(0, 0, getWidth(), getHeight());
                 
                 // Rendering magic will happen here
+                List<Triangle> tris = new ArrayList<>();
+                tris.add(new Triangle(new Vertex(100, 100, 100),
+                                    new Vertex(-100, -100, 100),
+                                    new Vertex(-100, 100, -100),
+                                    Color.WHITE));
+                tris.add(new Triangle(new Vertex(100, 100, 100),
+                                    new Vertex(-100, -100, 100),
+                                    new Vertex(100, -100, -100),
+                                    Color.RED));
+                tris.add(new Triangle(new Vertex(-100, 100, -100),
+                                    new Vertex(100, -100, -100),
+                                    new Vertex(100, 100, 100),
+                                    Color.GREEN));
+                tris.add(new Triangle(new Vertex(-100, 100, -100),
+                                    new Vertex(100, -100, -100),
+                                    new Vertex(-100, -100, 100),
+                                    Color.BLUE));
+
+                g2.translate(getWidth() / 2, getHeight() / 2);
+                g2.setColor(Color.WHITE);
+                for (Triangle t : tris) {
+                    Path2D path = new Path2D.Double();
+                    path.moveTo(t.v1.x, t.v1.y);
+                    path.lineTo(t.v2.x, t.v2.y);
+                    path.lineTo(t.v3.x, t.v3.y);
+                    path.closePath();
+                    g2.draw(path);
+                }
             }
         };
         // Create a panel to hold both sliders inside renderPanel
-        sliderPanel = new JPanel(new BorderLayout());
-        sliderPanel.setOpaque(false);  // Make it blend with renderPanel
+        // sliderPanel = new JPanel(new BorderLayout());
+        // sliderPanel.setOpaque(false);  // Make it blend with renderPanel
 
         // Add sliders inside the sliderPanel
-        sliderPanel.add(xzSlider, BorderLayout.SOUTH);
-        sliderPanel.add(xySlider, BorderLayout.WEST);
+        // sliderPanel.add(xzSlider, BorderLayout.SOUTH);
+        // sliderPanel.add(xySlider, BorderLayout.WEST);
 
         // Add sliderPanel inside renderPanel
         renderPanel.setLayout(new BorderLayout());
-        renderPanel.add(sliderPanel, BorderLayout.CENTER);
+        // renderPanel.add(sliderPanel, BorderLayout.CENTER);
         frame.addComponentListener(new ComponentAdapter() {
             public void componentResized(ComponentEvent e) {
                 xzSlider.setPreferredSize(new Dimension(renderPanel.getWidth(), 30));
@@ -138,20 +173,20 @@ public class GUI implements ActionListener, ChangeListener {
 
         // Panel for buttons (RIGHT SIDE)
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(3, 1, 10, 10)); // 3 buttons stacked vertically
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20)); // Padding
+        buttonPanel.setLayout(new GridLayout(3, 1, 20, 20)); // 3 buttons stacked vertically
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20)); // Padding
         buttonPanel.add(ClickButton);
         buttonPanel.add(ResetButton);
         buttonPanel.add(ExitButton);
         buttonPanel.setBackground(Color.GRAY);
 
         // Ensure button panel matches the render panel height
-        frame.addComponentListener(new ComponentAdapter() {
-            public void componentResized(ComponentEvent e) {
-                buttonPanel.setPreferredSize(new Dimension(400, renderPanel.getHeight()));
-                buttonPanel.revalidate();
-            }
-        });
+        // frame.addComponentListener(new ComponentAdapter() {
+        //     public void componentResized(ComponentEvent e) {
+        //         // buttonPanel.setPreferredSize(new Dimension(400, renderPanel.getHeight()));
+        //         buttonPanel.revalidate();
+        //     }
+        // });
         
         
         // Panel for labels (TOP)
@@ -164,36 +199,68 @@ public class GUI implements ActionListener, ChangeListener {
         JPanel southPanel = new JPanel(new BorderLayout());
         southPanel.setOpaque(false);
         southPanel.setBackground(Color.GRAY);
+
         
+        
+        //blank panel below button
+
+        JPanel blankPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        blankPanel.setOpaque(true);
+        blankPanel.setBackground(Color.GRAY);
+
+        blankPanel.setPreferredSize(new Dimension(screenSize.width/6 + 40, 30));
+       
+        // southPanel.add(blankPanel, BorderLayout.EAST);
+
+
         // Create bottom-left panel for the small button
         JPanel AutoRotatePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         AutoRotatePanel.setOpaque(true); // Ensure background color is visible
         AutoRotatePanel.setBackground(Color.GRAY);  
         
         // Add the XZ slider inside the southPanel
-        southPanel.add(xzSlider, BorderLayout.CENTER);
-        southPanel.add(AutoRotatePanel, BorderLayout.WEST);
+        // southPanel.add(xzSlider, BorderLayout.CENTER);
+        // southPanel.add(AutoRotatePanel, BorderLayout.WEST);
 
 
         AutoRotatePanel.add(AutoRotateButton);
 
+
+        blankPanel.add(AutoRotatePanel, BorderLayout.EAST);
         // Add AutoRotatePanel to the southPanel
-        southPanel.add(AutoRotatePanel, BorderLayout.WEST);
+        // southPanel.add(AutoRotatePanel, BorderLayout.WEST);
 
         // Modify sliderPanel to hold the updated southPanel
-        sliderPanel.setLayout(new BorderLayout());
-        sliderPanel.add(xySlider, BorderLayout.WEST);
-        sliderPanel.add(southPanel, BorderLayout.SOUTH); // Keeps both the slider & button
-
+        // sliderPanel.setLayout(new BorderLayout());
+        // sliderPanel.add(xySlider, BorderLayout.WEST);
+         // Keeps both the slider & button
+        // southPanel.add(blankPanel, BorderLayout.EAST);
 
 
         // Add Components to Frame
         frame.add(topPanel, BorderLayout.NORTH);
-        // frame.add(xzSlider, BorderLayout.SOUTH);
-        // frame.add(xySlider, BorderLayout.WEST);  // Keep XY slider on left
+
         
         frame.add(renderPanel, BorderLayout.CENTER);
         frame.add(buttonPanel, BorderLayout.EAST); // Move buttons to the RIGHT side
+        
+        southPanel.add(blankPanel, BorderLayout.EAST);
+        southPanel.add(AutoRotatePanel, BorderLayout.WEST);
+        
+        frame.add(southPanel, BorderLayout.SOUTH);
+        
+
+        southPanel.add(xzSlider, BorderLayout.CENTER);
+
+        // frame.add(xzSlider, BorderLayout.SOUTH); /// 
+        // xzPanel.add(blankPanel, BorderLayout.EAST);
+        frame.add(xySlider, BorderLayout.WEST);  // Keep XY slider on left
+        // frame.add(xzPanel, BorderLayout.SOUTH);
+
+        // xzPanel.add(southPanel, BorderLayout.CENTER);
+        // sliderPanel.add(southPanel, BorderLayout.SOUTH);
+
+        // frame.add(southPanel, BorderLayout.SOUTH);
 
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
@@ -244,5 +311,30 @@ public class GUI implements ActionListener, ChangeListener {
         // frame.add(new JLabel("If you can see this, the app is running!"));
         // frame.setVisible(true);
         new GUI();
+    }
+}
+
+
+class Vertex {
+    double x;
+    double y;
+    double z;
+    Vertex(double x, double y, double z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+}
+
+class Triangle {
+    Vertex v1;
+    Vertex v2;
+    Vertex v3;
+    Color color;
+    Triangle(Vertex v1, Vertex v2, Vertex v3, Color color) {
+        this.v1 = v1;
+        this.v2 = v2;
+        this.v3 = v3;
+        this.color = color;
     }
 }
