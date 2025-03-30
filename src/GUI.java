@@ -18,8 +18,12 @@ public class GUI implements ActionListener, ChangeListener {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         // frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setLayout(new BorderLayout());
-        // frame.setUndecorated(true);
-        frame.setSize(1000, 800);
+        frame.setUndecorated(true);
+
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        frame.setSize(screenSize.width, screenSize.height);
+    
+        // frame.setSize(1000, 800);
         frame.getContentPane().setBackground(Color.BLACK);
 
         // Click, Reset, and Exit Buttons
