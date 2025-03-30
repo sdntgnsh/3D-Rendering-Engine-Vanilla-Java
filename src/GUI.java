@@ -153,6 +153,7 @@ public class GUI implements ActionListener, ChangeListener {
         frame.add(topPanel, BorderLayout.NORTH);
         // frame.add(xzSlider, BorderLayout.SOUTH);
         // frame.add(xySlider, BorderLayout.WEST);  // Keep XY slider on left
+        
         frame.add(renderPanel, BorderLayout.CENTER);
         frame.add(buttonPanel, BorderLayout.EAST); // Move buttons to the RIGHT side
 
