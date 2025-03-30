@@ -1,2 +1,0 @@
-
-                // xySlider.addChangeListener(this);
