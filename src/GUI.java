@@ -11,7 +11,7 @@ public class GUI implements ActionListener, ChangeListener {
     private JButton ClickButton, ResetButton, ExitButton;
     private JLabel xzLabel, xyLabel;
     private JSlider xzSlider, xySlider;
-    private JPanel renderPanel;
+    private JPanel renderPanel, xzPanel, xyPanel;
 
     public GUI() {
         frame = new JFrame("Main Application");
@@ -20,7 +20,6 @@ public class GUI implements ActionListener, ChangeListener {
         frame.setLayout(new BorderLayout());
         frame.setUndecorated(true);
         frame.getContentPane().setBackground(Color.BLACK);
-
 
         // Click, Reset, and Exit Buttons
         ClickButton = new JButton("Click Me");
@@ -43,6 +42,14 @@ public class GUI implements ActionListener, ChangeListener {
         // Sliders for XZ and XY movement
         xzSlider = new JSlider(JSlider.HORIZONTAL, -50, 50, 0);
         xySlider = new JSlider(JSlider.VERTICAL, -50, 50, 0);
+        xzPanel = new JPanel(new BorderLayout());
+        xzPanel.setBackground(Color.GRAY);
+        xzPanel.add(xzSlider, BorderLayout.CENTER);
+        
+        xyPanel = new JPanel(new BorderLayout());
+        xyPanel.setBackground(Color.GRAY);
+        xyPanel.add(xySlider, BorderLayout.CENTER);
+        
 
         // Slider properties for smooth scrolling feel
         xzSlider.setMajorTickSpacing(10);
@@ -78,8 +85,10 @@ public class GUI implements ActionListener, ChangeListener {
         });
         xzSlider.setBackground(Color.GRAY);
         xySlider.setBackground(Color.GRAY);
-
-
+        xzSlider.setPreferredSize(new Dimension(400, 30)); 
+        xySlider.setPreferredSize(new Dimension(25, 400));
+        
+        
 
         // Labels for sliders
         xzLabel = new JLabel("XZ Position: 0", SwingConstants.CENTER);
@@ -122,6 +131,17 @@ public class GUI implements ActionListener, ChangeListener {
 
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
+        frame.addComponentListener(new ComponentAdapter() {
+            public void componentResized(ComponentEvent e) {
+                xzSlider.setPreferredSize(new Dimension(renderPanel.getWidth(), 30));
+                xySlider.setPreferredSize(new Dimension(30, renderPanel.getHeight()));
+        
+                xzPanel.revalidate();
+                xyPanel.revalidate();
+            }
+        });
+        
+        
     }
 
     // Handle button clicks
