@@ -11,7 +11,7 @@ public class GUI implements ActionListener, ChangeListener {
     private JButton ClickButton, ResetButton, ExitButton;
     private JLabel xzLabel, xyLabel;
     private JSlider xzSlider, xySlider;
-    private JPanel renderPanel, xzPanel, xyPanel;
+    private JPanel renderPanel, xzPanel, xyPanel, sliderPanel;
 
     public GUI() {
         frame = new JFrame("Main Application");
@@ -38,11 +38,10 @@ public class GUI implements ActionListener, ChangeListener {
         ClickButton.setBackground(Color.LIGHT_GRAY);
         ResetButton.setBackground(Color.LIGHT_GRAY);
         ExitButton.setBackground(Color.RED);
-
-
         // Sliders for XZ and XY movement
         xzSlider = new JSlider(JSlider.HORIZONTAL, -50, 50, 0);
         xySlider = new JSlider(JSlider.VERTICAL, -50, 50, 0);
+        
         xzPanel = new JPanel(new BorderLayout());
         xzPanel.setBackground(Color.GRAY);
         xzPanel.add(xzSlider, BorderLayout.CENTER);
@@ -95,6 +94,8 @@ public class GUI implements ActionListener, ChangeListener {
         xzLabel = new JLabel("XZ Position: 0", SwingConstants.CENTER);
         xyLabel = new JLabel("XY Position: 0", SwingConstants.CENTER);
 
+
+        
         // Render Panel to show 3D Render
         renderPanel = new JPanel() {
             public void paintComponent(Graphics g) {
@@ -102,10 +103,31 @@ public class GUI implements ActionListener, ChangeListener {
                 Graphics2D g2 = (Graphics2D) g;
                 g2.setColor(Color.BLACK);
                 g2.fillRect(0, 0, getWidth(), getHeight());
-
+                
                 // Rendering magic will happen here
             }
         };
+        // Create a panel to hold both sliders inside renderPanel
+        sliderPanel = new JPanel(new BorderLayout());
+        sliderPanel.setOpaque(false);  // Make it blend with renderPanel
+
+        // Add sliders inside the sliderPanel
+        sliderPanel.add(xzSlider, BorderLayout.SOUTH);
+        sliderPanel.add(xySlider, BorderLayout.WEST);
+
+        // Add sliderPanel inside renderPanel
+        renderPanel.setLayout(new BorderLayout());
+        renderPanel.add(sliderPanel, BorderLayout.CENTER);
+        frame.addComponentListener(new ComponentAdapter() {
+            public void componentResized(ComponentEvent e) {
+                xzSlider.setPreferredSize(new Dimension(renderPanel.getWidth(), 30));
+                xySlider.setPreferredSize(new Dimension(30, renderPanel.getHeight()));
+        
+                renderPanel.revalidate();
+            }
+        });
+        
+
 
         // Panel for buttons (RIGHT SIDE)
         JPanel buttonPanel = new JPanel();
@@ -125,8 +147,8 @@ public class GUI implements ActionListener, ChangeListener {
 
         // Add Components to Frame
         frame.add(topPanel, BorderLayout.NORTH);
-        frame.add(xzSlider, BorderLayout.SOUTH);
-        frame.add(xySlider, BorderLayout.WEST);  // Keep XY slider on left
+        // frame.add(xzSlider, BorderLayout.SOUTH);
+        // frame.add(xySlider, BorderLayout.WEST);  // Keep XY slider on left
         frame.add(renderPanel, BorderLayout.CENTER);
         frame.add(buttonPanel, BorderLayout.EAST); // Move buttons to the RIGHT side
 
@@ -173,7 +195,6 @@ public class GUI implements ActionListener, ChangeListener {
 
     public static void main(String[] args) {
 
-        System.out.println("Application starting...");
         // JFrame frame = new JFrame("Debug Window");
         // frame.setSize(300, 200);
         // frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
