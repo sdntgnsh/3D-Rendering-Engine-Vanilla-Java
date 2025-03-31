@@ -55,7 +55,6 @@ public class GUI implements ActionListener, ChangeListener {
         ClickButton.addActionListener(this);
         ResetButton.addActionListener(this);
         ExitButton.addActionListener(this);
-        AutoRotateButton.addActionListener(this);
 
         ClickButton.setBackground(Color.LIGHT_GRAY);
         ResetButton.setBackground(Color.LIGHT_GRAY);
@@ -385,22 +384,6 @@ public class GUI implements ActionListener, ChangeListener {
 
     // Handle button clicks
     public void actionPerformed(ActionEvent e) {
-        if(e.getSource() == AutoRotateButton){
-            if(ToggleAutoRotate){
-                // If auto-rotation is active, stop it:
-                ToggleAutoRotate = false;
-                autoRotateTimer.stop();
-                // Optionally update UI (e.g., change button background)
-                AutoRotateButton.setBackground(Color.LIGHT_GRAY);
-            }
-            else{
-                // If auto-rotation is off, start it:
-                ToggleAutoRotate = true;
-                autoRotateTimer.start();
-                // Optionally update UI (e.g., change button background)
-                AutoRotateButton.setBackground(Color.GREEN);
-            }
-        }
         if (e.getSource() == ExitButton) {
             System.exit(0);
         } else if (e.getSource() == ClickButton) {
