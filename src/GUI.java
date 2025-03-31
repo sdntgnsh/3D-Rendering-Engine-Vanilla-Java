@@ -115,6 +115,7 @@ public class GUI implements ActionListener, ChangeListener {
                 xySlider.setValue(value - (notches * 2)); // Adjust sensitivity as needed
             }
         });
+  
         xzSlider.setBackground(Color.GRAY);
         xySlider.setBackground(Color.GRAY);
         xzSlider.setPreferredSize(new Dimension(400, 30)); 
@@ -145,11 +146,11 @@ public class GUI implements ActionListener, ChangeListener {
                 else{
                     Shape_Coords = CoordinateCreator.create_square_coords(200);
                 }
-                Color colorArr[] = {Color.RED,Color.GREEN, Color.BLUE, Color.GRAY, Color.ORANGE };
+                Color colorArr[] = {Color.RED,Color.WHITE, Color.GRAY};
 
                 int inx  = 0;
                 for(Vertex[] coords : Shape_Coords){
-                    polygon_list.add(new Polygon(coords, colorArr[inx++ % 5]));
+                    polygon_list.add(new Polygon(coords, colorArr[inx++ % colorArr.length]));
                 }
 
 
@@ -273,30 +274,45 @@ public class GUI implements ActionListener, ChangeListener {
 
                         for (int y = minY; y <= maxY; y++) {
                             for (int x = minX; x <= maxX; x++) {
-                                double inside[] = {0.0, 0.0,0.0,0.0};
-                                double inside2[] = {Double.POSITIVE_INFINITY, 0.0,0.0,0.0};
-                                
+                                double[] inside = null;
+                                double[] inside2 = null;
+                                boolean inTriangle = false;
+                                boolean inTriangle2 = false;
+                                double epsilon = 1e-6;  // Use a small epsilon for floating-point comparisons
+
                                 if (poly.number_of_sides == 3) {
                                     inside = isPointInsideTriangle(x, y, poly.vertex_array.get(0), poly.vertex_array.get(1), poly.vertex_array.get(2));
-
+                                    // Check if point is inside the triangle:
+                                    inTriangle = Math.abs(inside[0] - (inside[1] + inside[2] + inside[3])) < epsilon;
                                 } else if (poly.number_of_sides == 4) {
-                                    // Split the quad into two triangles
+                                    // First triangle: vertices 0,1,2
                                     inside = isPointInsideTriangle(x, y, poly.vertex_array.get(0), poly.vertex_array.get(1), poly.vertex_array.get(2));
+                                    inTriangle = Math.abs(inside[0] - (inside[1] + inside[2] + inside[3])) < epsilon;
+                                    
+                                    // Second triangle: vertices 0,2,3
                                     inside2 = isPointInsideTriangle(x, y, poly.vertex_array.get(0), poly.vertex_array.get(2), poly.vertex_array.get(3));
-
-                                    // for(int i = 0; i < inside.length; i++){
-                                    //     inside[i] += inside2[i];
-                                    // }
-
-
-
+                                    inTriangle2 = Math.abs(inside2[0] - (inside2[1] + inside2[2] + inside2[3])) < epsilon;
                                 }
-                                double epsilon = 0.0000005;
-                                
-                                if (Math.abs(inside[0] - (inside[1] + inside[2] + inside[3])) < epsilon || Math.abs(inside2[0] - (inside2[1] + inside2[2] + inside2[3])) < epsilon) {
+
+                                if (inTriangle || inTriangle2) {
                                     double depth = 0.0;
-                                    for (int i = 0; i < poly.number_of_sides; i++) {
-                                        depth += inside[i] * poly.vertex_array.get(i).z;
+                                    if (inTriangle) {
+                                        // Normalize barycentrics for triangle (0,1,2)
+                                        double b1 = inside[1] / inside[0];
+                                        double b2 = inside[2] / inside[0];
+                                        double b3 = inside[3] / inside[0];
+                                        depth = b1 * poly.vertex_array.get(0).z +
+                                                b2 * poly.vertex_array.get(1).z +
+                                                b3 * poly.vertex_array.get(2).z;
+                                    } 
+                                    else if (inTriangle2) {
+                                        // Normalize barycentrics for triangle (0,2,3)
+                                        double b1 = inside2[1] / inside2[0];
+                                        double b2 = inside2[2] / inside2[0];
+                                        double b3 = inside2[3] / inside2[0];
+                                        depth = b1 * poly.vertex_array.get(0).z +
+                                                b2 * poly.vertex_array.get(2).z +
+                                                b3 * poly.vertex_array.get(3).z;
                                     }
                                     int zinx = y*img.getWidth() + x;
 
