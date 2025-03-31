@@ -27,7 +27,7 @@ public class GUI implements ActionListener, ChangeListener {
     private double totalRotationAngleXY = 0.0;
     private static final double AUTO_ROTATION_SPEED = 1.0; 
     private boolean isAutoRotating = false; // Flag to block slider feedback
-    private boolean ToggleAutoRotate = false;
+    private boolean ToggleAutoRotate = true;
 
     public GUI() {
         frame = new JFrame("Main Application");
@@ -268,7 +268,7 @@ public class GUI implements ActionListener, ChangeListener {
             });
 
         idleCheckTimer = new Timer(500, e -> {
-            if (System.currentTimeMillis() - lastUserInputTime > IDLE_TIMEOUT) {
+            if (System.currentTimeMillis() - lastUserInputTime > IDLE_TIMEOUT && ToggleAutoRotate == false) {
                 if (!autoRotateTimer.isRunning()) {
                     autoRotateTimer.start();
                 }
@@ -382,16 +382,16 @@ public class GUI implements ActionListener, ChangeListener {
     // Handle button clicks
     public void actionPerformed(ActionEvent e) {
         if(e.getSource() == AutoRotateButton){
-            if(ToggleAutoRotate){
+            if(ToggleAutoRotate == false){
                 // If auto-rotation is active, stop it:
-                ToggleAutoRotate = false;
+                ToggleAutoRotate = true;
                 autoRotateTimer.stop();
                 // Optionally update UI (e.g., change button background)
                 AutoRotateButton.setBackground(Color.LIGHT_GRAY);
             }
             else{
                 // If auto-rotation is off, start it:
-                ToggleAutoRotate = true;
+                ToggleAutoRotate = false;
                 autoRotateTimer.start();
                 // Optionally update UI (e.g., change button background)
                 AutoRotateButton.setBackground(Color.GREEN);
