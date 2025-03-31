@@ -255,7 +255,7 @@ public class GUI implements ActionListener, ChangeListener {
                         minY = (int)Math.max(0, Math.ceil(minY));
                         maxY = (int)Math.min(img.getHeight() - 1, Math.floor(maxY));
                         
-                       double polyArea = 0.0;
+                        double polyArea = 0.0;
                         for (int i = 0; i < poly.number_of_sides; i++) {
                             int j = (i + 1) % poly.number_of_sides;  // Wrap-around for the last vertex
                             polyArea += poly.vertex_array.get(i).x * poly.vertex_array.get(j).y;
@@ -266,51 +266,76 @@ public class GUI implements ActionListener, ChangeListener {
 
 
                         Double baryArea[] = new Double[poly.number_of_sides];
+
+                       
+
+
+
                         for (int y = minY; y <= maxY; y++) {
                             for (int x = minX; x <= maxX; x++) {
-                                Vertex v3 = poly.vertex_array.get(2);
-                                Vertex v2 = poly.vertex_array.get(1);
-                                Vertex v1 = poly.vertex_array.get(0);
-                                // baryArea[0] = ((y - v3.y) * (v2.x - v3.x) + (v2.y - v3.y) * (v3.x - x)) / polyArea;
-                                // baryArea[1] = ((y - v1.y) * (v3.x - v1.x) + (v3.y - v1.y) * (v1.x - x)) / polyArea;
-                                // baryArea[2] = ((y - v2.y) * (v1.x - v2.x) + (v1.y - v2.y) * (v2.x - x)) / polyArea;
-                                Double barySum = 0.0;
-                                boolean baryFlag = true;
+                                boolean inside = false;
                                 
-                                for (int i = 0; i < poly.number_of_sides; i++) {
-                                    int prev = (i + poly.number_of_sides - 1) % poly.number_of_sides;
-                                    int next = (i + 1) % poly.number_of_sides;
-
-                                    // Get the previous and next vertices from the polygon
-                                    Vertex A = poly.vertex_array.get(prev);
-                                    Vertex B = poly.vertex_array.get(next);
-
-                                    // Compute the area of triangle (A, B, P) where P = (x, y)
-                                    double triArea = Math.abs(
-                                        (x - A.x) * (B.y - A.y) - (B.x - A.x) * (y - A.y)
-                                    ) / 2.0;
-
-                                    baryArea[i] = triArea; 
-                                    // Optionally, check that the triangle area is not negative (always true because of abs)
-                                    baryFlag &= (triArea >= 0);
-                                    barySum += triArea;
+                                if (poly.number_of_sides == 3) {
+                                    inside = isPointInsideTriangle(x, y, poly.vertex_array.get(0), poly.vertex_array.get(1), poly.vertex_array.get(2));
+                                } else if (poly.number_of_sides == 4) {
+                                    // Split the quad into two triangles
+                                    inside = isPointInsideTriangle(x, y, poly.vertex_array.get(0), poly.vertex_array.get(1), poly.vertex_array.get(2)) ||
+                                            isPointInsideTriangle(x, y, poly.vertex_array.get(0), poly.vertex_array.get(2), poly.vertex_array.get(3));
                                 }
-                                double epsilon = 0.005;
-                                if (Math.abs(barySum - polyArea) < epsilon) {
 
-                                    // double depth = b1 * v1.z + b2 * v2.z + b3 * v3.z;
-                                    // int zIndex = y * img.getWidth() + x;
-                                    // if (zBuffer[zIndex] < depth) {
-                                    //     img.setRGB(x, y, getShade(poly.color, angleCos).getRGB());
-                                    //     zBuffer[zIndex] = depth;
-                                    // }
-
-                                    
-
+                                if (inside) {
                                     img.setRGB(x, y, poly.color.getRGB());
                                 }
                             }
                         }
+
+
+                        // for (int y = minY; y <= maxY; y++) {
+                        //     for (int x = minX; x <= maxX; x++) {
+                        //         Vertex v3 = poly.vertex_array.get(2);
+                        //         Vertex v2 = poly.vertex_array.get(1);
+                        //         Vertex v1 = poly.vertex_array.get(0);
+                        //         // baryArea[0] = ((y - v3.y) * (v2.x - v3.x) + (v2.y - v3.y) * (v3.x - x)) / polyArea;
+                        //         // baryArea[1] = ((y - v1.y) * (v3.x - v1.x) + (v3.y - v1.y) * (v1.x - x)) / polyArea;
+                        //         // baryArea[2] = ((y - v2.y) * (v1.x - v2.x) + (v1.y - v2.y) * (v2.x - x)) / polyArea;
+                        //         double barySum = 0.0;
+                        //         boolean baryFlag = true;
+                        //         for (int i = 0; i < poly.number_of_sides; i++) {
+                        //             // For each vertex, define "prev" and "next" indices using modulo arithmetic.
+                        //             int prev = (i + poly.number_of_sides - 1) % poly.number_of_sides;
+                        //             int next = (i + 1) % poly.number_of_sides;
+
+                        //             // Get the vertices for the current triangle: A (prev) and B (next).
+                        //             Vertex A = poly.vertex_array.get(prev);
+                        //             Vertex B = poly.vertex_array.get(next);
+
+                        //             // Compute the area of triangle (A, B, P) using the cross-product method.
+                        //             // The formula for the area of a triangle given by points A, B, and P is:
+                        //             // area = |(P.x - A.x) * (B.y - A.y) - (B.x - A.x) * (P.y - A.y)| / 2.
+                        //             double triArea = Math.abs((x - A.x) * (B.y - A.y) - (B.x - A.x) * (y - A.y)) / 2.0;
+
+                        //             // Store the computed area and update our cumulative sum.
+                        //             baryArea[i] = triArea;
+                        //             baryFlag &= (triArea >= 0);  // (This check is mostly redundant when using Math.abs)
+                        //             barySum += triArea;
+                        //         }
+
+                        //         double epsilon = 100;
+                        //         if (Math.abs(barySum - polyArea) < epsilon) {
+
+                        //             // double depth = b1 * v1.z + b2 * v2.z + b3 * v3.z;
+                        //             // int zIndex = y * img.getWidth() + x;
+                        //             // if (zBuffer[zIndex] < depth) {
+                        //             //     img.setRGB(x, y, getShade(poly.color, angleCos).getRGB());
+                        //             //     zBuffer[zIndex] = depth;
+                        //             // }
+
+                                    
+
+                        //             img.setRGB(x, y, poly.color.getRGB());
+                        //         }
+                        //     }
+                        // }
 
                     }
 
@@ -558,6 +583,23 @@ public class GUI implements ActionListener, ChangeListener {
         }
         label.setText("Number of clicks:  " + clicks);
     }
+
+    //HERE LIES GPT
+
+     private boolean isPointInsideTriangle(int px, int py, Vertex v1, Vertex v2, Vertex v3) {
+                            double areaOrig = triangleArea(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y);
+                            double area1 = triangleArea(px, py, v2.x, v2.y, v3.x, v3.y);
+                            double area2 = triangleArea(v1.x, v1.y, px, py, v3.x, v3.y);
+                            double area3 = triangleArea(v1.x, v1.y, v2.x, v2.y, px, py);
+
+                            return Math.abs(areaOrig - (area1 + area2 + area3)) < 1e-5;
+                        }
+
+                        private double triangleArea(double x1, double y1, double x2, double y2, double x3, double y3) {
+                            return Math.abs((x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / 2.0);
+                        }
+
+
 
     // Handle slider movement
     public void stateChanged(ChangeEvent e) {
