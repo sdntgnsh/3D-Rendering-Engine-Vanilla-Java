@@ -1,6 +1,7 @@
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -144,9 +145,11 @@ public class GUI implements ActionListener, ChangeListener {
                 else{
                     Shape_Coords = CoordinateCreator.create_square_coords(200);
                 }
+                Color colorArr[] = {Color.RED,Color.GREEN, Color.BLUE, Color.GRAY, Color.ORANGE };
 
+                int inx  = 0;
                 for(Vertex[] coords : Shape_Coords){
-                    polygon_list.add(new Polygon(coords, Color.RED));
+                    polygon_list.add(new Polygon(coords, colorArr[inx++ % 5]));
                 }
 
 
@@ -166,34 +169,152 @@ public class GUI implements ActionListener, ChangeListener {
                 });
 
                 Matrix3 transform = headingTransform.multiply(pitchTransform);
-                g2.translate(getWidth() / 2, getHeight() / 2);
-                g2.setColor(Color.WHITE);
-                
-                for (Polygon poly : polygon_list) {
+                if(ToggleWireframe){
+                    g2.translate(getWidth() / 2, getHeight() / 2);
+                    g2.setColor(Color.WHITE);
+                    
+                    for (Polygon poly : polygon_list) {
 
 
-                    for(int i = 0; i < poly.number_of_sides; i++){
+                        for(int i = 0; i < poly.number_of_sides; i++){
 
-                        poly.vertex_array.set(i, transform.transform(poly.vertex_array.get(i)) );
-                    }
+                            poly.vertex_array.set(i, transform.transform(poly.vertex_array.get(i)) );
+                        }
 
 
-                    Path2D path = new Path2D.Double();
-                    Vertex prevVertex = poly.vertex_array.get(0);
-                    for(Vertex v : poly.vertex_array){ 
+                        Path2D path = new Path2D.Double();
+                        Vertex prevVertex = poly.vertex_array.get(0);
+                        for(Vertex v : poly.vertex_array){ 
+                            path.moveTo(prevVertex.x, prevVertex.y);
+                            path.lineTo(v.x, v.y);
+                            prevVertex = v;
+                        }
                         path.moveTo(prevVertex.x, prevVertex.y);
-                        path.lineTo(v.x, v.y);
-                        prevVertex = v;
-                    }
-                    path.moveTo(prevVertex.x, prevVertex.y);
-                    path.lineTo(poly.vertex_array.get(0).x, poly.vertex_array.get(0).y);
+                        path.lineTo(poly.vertex_array.get(0).x, poly.vertex_array.get(0).y);
 
-                    path.closePath();
-                    g2.draw(path);
+                        path.closePath();
+                        g2.draw(path);
+                    }
+                }
+                else{
+
+                    BufferedImage img = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+
+                    double[] zBuffer = new double[img.getWidth() * img.getHeight()];
+                    // initialize array with extremely far away depths
+                    for (int q = 0; q < zBuffer.length; q++) {
+                        zBuffer[q] = Double.NEGATIVE_INFINITY;
+                    }
+
+                    for (Polygon poly : polygon_list) {
+                        // Vertex v1 = transform.transform(poly.v1);
+                        // v1.x += getWidth() / 2;
+                        // v1.y += getHeight() / 2;
+                        // Vertex v2 = transform.transform(poly.v2);
+                        // v2.x += getWidth() / 2;
+                        // v2.y += getHeight() / 2;
+                        // Vertex v3 = transform.transform(poly.v3);
+                        // v3.x += getWidth() / 2;
+                        // v3.y += getHeight() / 2;
+
+                        for(int i = 0; i < poly.number_of_sides; i++){
+                            poly.vertex_array.set(i, transform.transform(poly.vertex_array.get(i)));
+                            poly.vertex_array.set(i, new Vertex(poly.vertex_array.get(i).x + getWidth()/2, poly.vertex_array.get(i).y + getHeight() / 2, poly.vertex_array.get(i).z ));
+                        }
+
+                        // Vertex ab = new Vertex(v2.x - v1.x, v2.y - v1.y, v2.z - v1.z);
+                        // Vertex ac = new Vertex(v3.x - v1.x, v3.y - v1.y, v3.z - v1.z);
+                        // Vertex norm = new Vertex(
+                        //      ab.y * ac.z - ab.z * ac.y,
+                        //      ab.z * ac.x - ab.x * ac.z,
+                        //      ab.x * ac.y - ab.y * ac.x
+                        // );
+                        // double normalLength = Math.sqrt(norm.x * norm.x + norm.y * norm.y + norm.z * norm.z);
+                        // norm.x /= normalLength;
+                        // norm.y /= normalLength;
+                        // norm.z /= normalLength;
+
+                        // double angleCos = Math.abs(norm.z);
+                        
+
+
+                        int minX = (int) Double.POSITIVE_INFINITY;
+                        int maxX = (int) Double.NEGATIVE_INFINITY;
+                        int minY = (int) Double.POSITIVE_INFINITY;
+                        int maxY = (int) Double.NEGATIVE_INFINITY;
+
+                        for(int i = 0; i < poly.number_of_sides; i++){
+                            minX = (int)Math.min(minX, poly.vertex_array.get(i).x);
+                            maxX = (int)Math.max(maxX, poly.vertex_array.get(i).x);
+                            minY = (int)Math.min(minY, poly.vertex_array.get(i).y);
+                            maxY = (int)Math.max(maxY, poly.vertex_array.get(i).y);
+                        }
+
+                        minX = (int)Math.max(0, Math.ceil(minX));
+                        maxX = (int)Math.min(img.getWidth() - 1, Math.floor(maxX));
+                        minY = (int)Math.max(0, Math.ceil(minY));
+                        maxY = (int)Math.min(img.getHeight() - 1, Math.floor(maxY));
+                        
+                        double polyArea = 0;
+
+                        for(int i = 0; i < poly.number_of_sides; i++){
+
+                            if(i == poly.number_of_sides - 1){
+                                polyArea += (poly.vertex_array.get(i).x*poly.vertex_array.get(0).y);
+                                polyArea -= (poly.vertex_array.get(0).x*poly.vertex_array.get(i).y);
+                                break;
+                            }
+                            polyArea += (poly.vertex_array.get(i).x*poly.vertex_array.get(i + 1).y);
+                            polyArea -= (poly.vertex_array.get(i + 1).x*poly.vertex_array.get(i).y);
+                        }
+
+
+
+                        Double baryArea[] = new Double[poly.number_of_sides];
+                        for (int y = minY; y <= maxY; y++) {
+                            for (int x = minX; x <= maxX; x++) {
+                                Vertex v3 = poly.vertex_array.get(2);
+                                Vertex v2 = poly.vertex_array.get(1);
+                                Vertex v1 = poly.vertex_array.get(0);
+                                // baryArea[0] = ((y - v3.y) * (v2.x - v3.x) + (v2.y - v3.y) * (v3.x - x)) / polyArea;
+                                // baryArea[1] = ((y - v1.y) * (v3.x - v1.x) + (v3.y - v1.y) * (v1.x - x)) / polyArea;
+                                // baryArea[2] = ((y - v2.y) * (v1.x - v2.x) + (v1.y - v2.y) * (v2.x - x)) / polyArea;
+                                Double barySum = 0.0;
+                                boolean baryFlag = true;
+                                for (int i = 0; i < poly.number_of_sides; i++) {
+
+                                    int prev = (i + poly.number_of_sides - 1) % poly.number_of_sides;
+                                    int next = (i + 1) % poly.number_of_sides;
+                                    baryArea[i] = ((y - poly.vertex_array.get(prev).y) * (poly.vertex_array.get(next).x - poly.vertex_array.get(prev).x) +
+                                            (poly.vertex_array.get(next).y - poly.vertex_array.get(prev).y) * (poly.vertex_array.get(prev).x - x));
+                                    // baryArea[i] /= polyArea; 
+                                    baryFlag &= (baryArea[i] >= 0 && baryArea[i] <= 1);
+                                    barySum += baryArea[i];
+                                }
+                                
+                                if (barySum <= polyArea) {
+
+                                    // double depth = b1 * v1.z + b2 * v2.z + b3 * v3.z;
+                                    // int zIndex = y * img.getWidth() + x;
+                                    // if (zBuffer[zIndex] < depth) {
+                                    //     img.setRGB(x, y, getShade(poly.color, angleCos).getRGB());
+                                    //     zBuffer[zIndex] = depth;
+                                    // }
+
+                                    
+
+                                    img.setRGB(x, y, poly.color.getRGB());
+                                }
+                            }
+                        }
+
+                    }
+
+                    g2.drawImage(img, 0, 0, null);
                 }
             }
+        
         };
-
         xySlider.addChangeListener(e -> renderPanel.repaint());
         xzSlider.addChangeListener(e -> renderPanel.repaint());
         renderPanel.setLayout(new BorderLayout());
@@ -422,6 +543,7 @@ public class GUI implements ActionListener, ChangeListener {
             }
         }
         if (e.getSource() == ToggleWireframeButton) {
+            renderPanel.repaint();
             // Toggle auto-rotation state
            ToggleWireframe  = !ToggleWireframe;
             // AutoRotateButton.setText(ToggleWireframe ? "↺" : "▶");
