@@ -189,10 +189,10 @@ public class GUI implements ActionListener, ChangeListener {
                 
             // Adding coordinates to Shape_Coords
                 if(clicks % 2 == 0){
-                    Shape_Coords = CoordinateCreator.create_triangle_coords(200);
+                    Shape_Coords = CoordinateCreator.create_triangle_coords(75);
                 }
                 else{
-                    Shape_Coords = CoordinateCreator.create_square_coords(200);
+                    Shape_Coords = CoordinateCreator.create_square_coords(75);
                 }
                 Color colorArr[] = {Color.RED,Color.WHITE, Color.GRAY};
 
