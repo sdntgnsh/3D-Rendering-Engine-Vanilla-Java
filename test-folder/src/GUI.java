@@ -191,10 +191,10 @@ public class GUI implements ActionListener, ChangeListener {
                 
             // Adding coordinates to Shape_Coords
                 if(clicks % 2 == 0){
-                    Shape_Coords = CoordinateCreator.create_triangle_coords(150);
+                    Shape_Coords = CoordinateCreator.create_triangle_coords(100);
                 }
                 else{
-                    Shape_Coords = CoordinateCreator.create_square_coords(150);
+                    Shape_Coords = CoordinateCreator.create_square_coords(100);
                 }
                 Color colorArr[] = {new Color(205, 180, 219), new Color(255, 200, 221), new Color(255, 175, 204), new Color(189, 224, 254), new Color(162, 210, 255), new Color(202, 240, 248)};
                 Color colorArr2[] = {new Color(255, 173, 173), new Color(255, 214, 165), new Color(253, 255, 182), new Color(202, 255, 191),new Color(155, 246, 255),new Color(160, 196, 255), new Color(189, 178, 255)};

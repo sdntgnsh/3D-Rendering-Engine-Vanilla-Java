@@ -112,7 +112,7 @@ public class GUI implements ActionListener, ChangeListener {
         inputMap.put(KeyStroke.getKeyStroke("R"), "reset");
         inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), "exitApp");
         inputMap.put(KeyStroke.getKeyStroke("Q"), "toggleWireframe");
-        inputMap.put(KeyStroke.getKeyStroke("SPACE"), "toggleAutoRotate");
+        inputMap.put(KeyStroke.getKeyStroke("T"), "toggleAutoRotate");
         inputMap.put(KeyStroke.getKeyStroke("E"), "changeColor");
         
         actionMap.put("toggleShape", new AbstractAction() {
@@ -201,17 +201,20 @@ public class GUI implements ActionListener, ChangeListener {
                 
             // Adding coordinates to Shape_Coords
                 if(clicks % 2 == 0){
-                    Shape_Coords = CoordinateCreator.create_triangle_coords(75);
+                    Shape_Coords = CoordinateCreator.create_triangle_coords(100);
                 }
                 else{
-                    Shape_Coords = CoordinateCreator.create_square_coords(50);
+                    Shape_Coords = CoordinateCreator.create_square_coords(100);
                 }
                 Color colorArr[] = {new Color(205, 180, 219), new Color(255, 200, 221), new Color(255, 175, 204), new Color(189, 224, 254), new Color(162, 210, 255), new Color(202, 240, 248)};
                 Color colorArr2[] = {new Color(255, 173, 173), new Color(255, 214, 165), new Color(253, 255, 182), new Color(202, 255, 191),new Color(155, 246, 255),new Color(160, 196, 255), new Color(189, 178, 255)};
 
+                Color Colors[][] = {colorArr,colorArr2};
+
                 int inx  = 0;
                 for(Vertex[] coords : Shape_Coords){
-                    polygon_list.add(new Polygon(coords, colorArr2[inx % colorArr2.length]));
+
+                    polygon_list.add(new Polygon(coords, Colors[colorCounter%2][inx % Colors[colorCounter%2].length]));
                     inx++;
                 }
 
@@ -270,35 +273,12 @@ public class GUI implements ActionListener, ChangeListener {
                     }
 
                     for (Polygon poly : polygon_list) {
-                        // Vertex v1 = transform.transform(poly.v1);
-                        // v1.x += getWidth() / 2;
-                        // v1.y += getHeight() / 2;
-                        // Vertex v2 = transform.transform(poly.v2);
-                        // v2.x += getWidth() / 2;
-                        // v2.y += getHeight() / 2;
-                        // Vertex v3 = transform.transform(poly.v3);
-                        // v3.x += getWidth() / 2;
-                        // v3.y += getHeight() / 2;
 
                         for(int i = 0; i < poly.number_of_sides; i++){
                             poly.vertex_array.set(i, transform.transform(poly.vertex_array.get(i)));
                             poly.vertex_array.set(i, new Vertex(poly.vertex_array.get(i).x + getWidth()/2, poly.vertex_array.get(i).y + getHeight() / 2, poly.vertex_array.get(i).z ));
                         }
 
-                        // Vertex ab = new Vertex(v2.x - v1.x, v2.y - v1.y, v2.z - v1.z);
-                        // Vertex ac = new Vertex(v3.x - v1.x, v3.y - v1.y, v3.z - v1.z);
-                        // Vertex norm = new Vertex(
-                        //      ab.y * ac.z - ab.z * ac.y,
-                        //      ab.z * ac.x - ab.x * ac.z,
-                        //      ab.x * ac.y - ab.y * ac.x
-                        // );
-                        // double normalLength = Math.sqrt(norm.x * norm.x + norm.y * norm.y + norm.z * norm.z);
-                        // norm.x /= normalLength;
-                        // norm.y /= normalLength;
-                        // norm.z /= normalLength;
-
-                        // double angleCos = Math.abs(norm.z);
-                        
 
 
                         int minX = (int) Double.POSITIVE_INFINITY;
@@ -389,52 +369,6 @@ public class GUI implements ActionListener, ChangeListener {
                         }
 
 
-                        // for (int y = minY; y <= maxY; y++) {
-                        //     for (int x = minX; x <= maxX; x++) {
-                        //         Vertex v3 = poly.vertex_array.get(2);
-                        //         Vertex v2 = poly.vertex_array.get(1);
-                        //         Vertex v1 = poly.vertex_array.get(0);
-                        //         // baryArea[0] = ((y - v3.y) * (v2.x - v3.x) + (v2.y - v3.y) * (v3.x - x)) / polyArea;
-                        //         // baryArea[1] = ((y - v1.y) * (v3.x - v1.x) + (v3.y - v1.y) * (v1.x - x)) / polyArea;
-                        //         // baryArea[2] = ((y - v2.y) * (v1.x - v2.x) + (v1.y - v2.y) * (v2.x - x)) / polyArea;
-                        //         double barySum = 0.0;
-                        //         boolean baryFlag = true;
-                        //         for (int i = 0; i < poly.number_of_sides; i++) {
-                        //             // For each vertex, define "prev" and "next" indices using modulo arithmetic.
-                        //             int prev = (i + poly.number_of_sides - 1) % poly.number_of_sides;
-                        //             int next = (i + 1) % poly.number_of_sides;
-
-                        //             // Get the vertices for the current triangle: A (prev) and B (next).
-                        //             Vertex A = poly.vertex_array.get(prev);
-                        //             Vertex B = poly.vertex_array.get(next);
-
-                        //             // Compute the area of triangle (A, B, P) using the cross-product method.
-                        //             // The formula for the area of a triangle given by points A, B, and P is:
-                        //             // area = |(P.x - A.x) * (B.y - A.y) - (B.x - A.x) * (P.y - A.y)| / 2.
-                        //             double triArea = Math.abs((x - A.x) * (B.y - A.y) - (B.x - A.x) * (y - A.y)) / 2.0;
-
-                        //             // Store the computed area and update our cumulative sum.
-                        //             baryArea[i] = triArea;
-                        //             baryFlag &= (triArea >= 0);  // (This check is mostly redundant when using Math.abs)
-                        //             barySum += triArea;
-                        //         }
-
-                        //         double epsilon = 100;
-                        //         if (Math.abs(barySum - polyArea) < epsilon) {
-
-                        //             // double depth = b1 * v1.z + b2 * v2.z + b3 * v3.z;
-                        //             // int zIndex = y * img.getWidth() + x;
-                        //             // if (zBuffer[zIndex] < depth) {
-                        //             //     img.setRGB(x, y, getShade(poly.color, angleCos).getRGB());
-                        //             //     zBuffer[zIndex] = depth;
-                        //             // }
-
-                                    
-
-                        //             img.setRGB(x, y, poly.color.getRGB());
-                        //         }
-                        //     }
-                        // }
 
                     }
 
@@ -653,7 +587,7 @@ public class GUI implements ActionListener, ChangeListener {
             clicks++;
         } 
         if (e.getSource() == ChangeColorButton) {
-            renderPanel.repaint();
+            // renderPanel.repaint();
             colorCounter++;
             ChangeColorLabel.setText("Change Color:  " + colorCounter);
         } 
