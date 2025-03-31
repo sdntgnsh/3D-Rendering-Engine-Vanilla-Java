@@ -55,6 +55,7 @@ public class GUI implements ActionListener, ChangeListener {
         ClickButton.addActionListener(this);
         ResetButton.addActionListener(this);
         ExitButton.addActionListener(this);
+        AutoRotateButton.addActionListener(this);
 
         ClickButton.setBackground(Color.LIGHT_GRAY);
         ResetButton.setBackground(Color.LIGHT_GRAY);
@@ -126,8 +127,6 @@ public class GUI implements ActionListener, ChangeListener {
                 g2.fillRect(0, 0, getWidth(), getHeight());
                 
                 // Rendering magic will happen here
-                List<Polygon> sqare_list = new ArrayList<>();
-
                 List<Polygon> polygon_list = new ArrayList<>();
 
                 List<Vertex[]> Shape_Coords = new ArrayList<>(); 
@@ -143,11 +142,6 @@ public class GUI implements ActionListener, ChangeListener {
 
                 for(Vertex[] coords : Shape_Coords){
                     polygon_list.add(new Polygon(coords, Color.RED));
-                }
-
-
-                for(Vertex[] coords : Shape_Coords){
-                    sqare_list.add(new Polygon(coords, Color.RED));
                 }
 
 
@@ -170,24 +164,24 @@ public class GUI implements ActionListener, ChangeListener {
                 g2.translate(getWidth() / 2, getHeight() / 2);
                 g2.setColor(Color.WHITE);
                 
-                for (Polygon t : polygon_list) {
+                for (Polygon poly : polygon_list) {
 
 
-                    for(int i = 0; i < t.number_of_sides; i++){
+                    for(int i = 0; i < poly.number_of_sides; i++){
 
-                        t.vertex_array.set(i, transform.transform(t.vertex_array.get(i)) );
+                        poly.vertex_array.set(i, transform.transform(poly.vertex_array.get(i)) );
                     }
 
 
                     Path2D path = new Path2D.Double();
-                    Vertex prevVertex = t.vertex_array.get(0);
-                    for(Vertex v : t.vertex_array){ 
+                    Vertex prevVertex = poly.vertex_array.get(0);
+                    for(Vertex v : poly.vertex_array){ 
                         path.moveTo(prevVertex.x, prevVertex.y);
                         path.lineTo(v.x, v.y);
                         prevVertex = v;
                     }
                     path.moveTo(prevVertex.x, prevVertex.y);
-                    path.lineTo(t.vertex_array.get(0).x, t.vertex_array.get(0).y);
+                    path.lineTo(poly.vertex_array.get(0).x, poly.vertex_array.get(0).y);
 
                     path.closePath();
                     g2.draw(path);
@@ -218,7 +212,8 @@ public class GUI implements ActionListener, ChangeListener {
         // Panel for labels (TOP)
         JPanel topPanel = new JPanel(new GridLayout(2, 1));
         topPanel.add(label);
-        topPanel.add(xzLabel);
+        // topPanel.add(xzLabel);
+        // topPanel.add(xyLabel);
         topPanel.setBackground(Color.GRAY);
         
         // Create a new panel to hold both XZ slider and small button
@@ -261,20 +256,20 @@ public class GUI implements ActionListener, ChangeListener {
             }
         });
 
-        autoRotateTimer = new Timer(30, e -> {
-            isAutoRotating = true; // Block stateChanged updates during auto-rotation
-            
-            // Increment angles continuously
-            totalRotationAngleXZ += AUTO_ROTATION_SPEED;
-            totalRotationAngleXY += AUTO_ROTATION_SPEED;
-            
-            // Map angles to slider range (-50 to 50) using modulo
-            xzSlider.setValue((int) ((totalRotationAngleXZ / 5) % 100 - 50));
-            xySlider.setValue((int) ((totalRotationAngleXY / 5) % 100 - 50));
-            
-            isAutoRotating = false;
-            renderPanel.repaint();
-        });
+            autoRotateTimer = new Timer(30, e -> {
+                isAutoRotating = true; // Block stateChanged updates during auto-rotation
+                
+                // Increment angles continuously
+                totalRotationAngleXZ += AUTO_ROTATION_SPEED;
+                totalRotationAngleXY += AUTO_ROTATION_SPEED;
+                
+                // Map angles to slider range (-50 to 50) using modulo
+                xzSlider.setValue((int) ((totalRotationAngleXZ / 5) % 100 - 50));
+                xySlider.setValue((int) ((totalRotationAngleXY / 5) % 100 - 50));
+                
+                isAutoRotating = false;
+                renderPanel.repaint();
+            });
 
         idleCheckTimer = new Timer(500, e -> {
             if (System.currentTimeMillis() - lastUserInputTime > IDLE_TIMEOUT) {
@@ -390,6 +385,22 @@ public class GUI implements ActionListener, ChangeListener {
 
     // Handle button clicks
     public void actionPerformed(ActionEvent e) {
+        if(e.getSource() == AutoRotateButton){
+            if(ToggleAutoRotate){
+                // If auto-rotation is active, stop it:
+                ToggleAutoRotate = false;
+                autoRotateTimer.stop();
+                // Optionally update UI (e.g., change button background)
+                AutoRotateButton.setBackground(Color.LIGHT_GRAY);
+            }
+            else{
+                // If auto-rotation is off, start it:
+                ToggleAutoRotate = true;
+                autoRotateTimer.start();
+                // Optionally update UI (e.g., change button background)
+                AutoRotateButton.setBackground(Color.GREEN);
+            }
+        }
         if (e.getSource() == ExitButton) {
             System.exit(0);
         } else if (e.getSource() == ClickButton) {
@@ -450,7 +461,7 @@ class Vertex {
 
 
 class Polygon {
-    int number_of_sides = 3;
+    int number_of_sides = 3; //Defaut Triangle
 
     public List<Vertex> vertex_array = new ArrayList<>();
 
