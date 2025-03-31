@@ -62,7 +62,7 @@ public class GUI implements ActionListener, ChangeListener {
         ExitButton.setBackground(Color.RED);
 
         AutoRotateButton.addActionListener(this);
-        AutoRotateButton.setText("↺");
+        // AutoRotateButton.setText("↺");
 
         // Sliders for XZ and XY movement
         xzSlider = new JSlider(JSlider.HORIZONTAL, -50, 50, 0);
