@@ -121,7 +121,7 @@ public class GUI implements ActionListener, ChangeListener {
                 g2.fillRect(0, 0, getWidth(), getHeight());
                 
                 // Rendering magic will happen here
-                List<Square> sqare_list = new ArrayList<>();
+                List<Polygon> sqare_list = new ArrayList<>();
 
                 List<Polygon> polygon_list = new ArrayList<>();
 
@@ -137,7 +137,7 @@ public class GUI implements ActionListener, ChangeListener {
 
 
                 for(Vertex[] coords : Shape_Coords){
-                    sqare_list.add(new Square(coords, Color.RED));
+                    sqare_list.add(new Polygon(coords, Color.RED));
                 }
 
 
@@ -426,25 +426,7 @@ class Vertex {
     }
 }
 
-class Triangle {
-    int number_of_sides = 3;
-    public Vertex vertex_array[] = new Vertex[number_of_sides];
-    Color color;
-    Triangle(Vertex inp[], Color color) {
-        this.vertex_array = inp;
-        this.color = color;
-    }
-}
 
-class Square {
-    int number_of_sides = 4;
-    public Vertex vertex_array[] = new Vertex[number_of_sides];
-    Color color;
-    Square(Vertex inp[], Color color) {
-        this.vertex_array = inp;
-        this.color = color;
-    }
-}
 
 class Polygon {
     int number_of_sides = 3;
