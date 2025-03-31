@@ -165,24 +165,24 @@ public class GUI implements ActionListener, ChangeListener {
                 g2.translate(getWidth() / 2, getHeight() / 2);
                 g2.setColor(Color.WHITE);
                 
-                for (Polygon t : polygon_list) {
+                for (Polygon poly : polygon_list) {
 
 
-                    for(int i = 0; i < t.number_of_sides; i++){
+                    for(int i = 0; i < poly.number_of_sides; i++){
 
-                        t.vertex_array.set(i, transform.transform(t.vertex_array.get(i)) );
+                        poly.vertex_array.set(i, transform.transform(poly.vertex_array.get(i)) );
                     }
 
 
                     Path2D path = new Path2D.Double();
-                    Vertex prevVertex = t.vertex_array.get(0);
-                    for(Vertex v : t.vertex_array){ 
+                    Vertex prevVertex = poly.vertex_array.get(0);
+                    for(Vertex v : poly.vertex_array){ 
                         path.moveTo(prevVertex.x, prevVertex.y);
                         path.lineTo(v.x, v.y);
                         prevVertex = v;
                     }
                     path.moveTo(prevVertex.x, prevVertex.y);
-                    path.lineTo(t.vertex_array.get(0).x, t.vertex_array.get(0).y);
+                    path.lineTo(poly.vertex_array.get(0).x, poly.vertex_array.get(0).y);
 
                     path.closePath();
                     g2.draw(path);
