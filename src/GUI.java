@@ -201,16 +201,18 @@ public class GUI implements ActionListener, ChangeListener {
                 
             // Adding coordinates to Shape_Coords
                 if(clicks % 2 == 0){
-                    Shape_Coords = CoordinateCreator.create_triangle_coords(200);
+                    Shape_Coords = CoordinateCreator.create_triangle_coords(75);
                 }
                 else{
-                    Shape_Coords = CoordinateCreator.create_square_coords(200);
+                    Shape_Coords = CoordinateCreator.create_square_coords(50);
                 }
-                Color colorArr[] = {Color.RED,Color.WHITE, Color.GRAY};
+                Color colorArr[] = {new Color(205, 180, 219), new Color(255, 200, 221), new Color(255, 175, 204), new Color(189, 224, 254), new Color(162, 210, 255), new Color(202, 240, 248)};
+                Color colorArr2[] = {new Color(255, 173, 173), new Color(255, 214, 165), new Color(253, 255, 182), new Color(202, 255, 191),new Color(155, 246, 255),new Color(160, 196, 255), new Color(189, 178, 255)};
 
                 int inx  = 0;
                 for(Vertex[] coords : Shape_Coords){
-                    polygon_list.add(new Polygon(coords, colorArr[inx++ % colorArr.length]));
+                    polygon_list.add(new Polygon(coords, colorArr2[inx % colorArr2.length]));
+                    inx++;
                 }
 
 
