@@ -28,6 +28,8 @@ public class GUI implements ActionListener, ChangeListener {
     private static final double AUTO_ROTATION_SPEED = 1.0; 
     private boolean isAutoRotating = false; // Flag to block slider feedback
 
+    private boolean autoRotationEnabled = true;
+
     public GUI() {
         frame = new JFrame("Main Application");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -58,6 +60,9 @@ public class GUI implements ActionListener, ChangeListener {
         ResetButton.setBackground(Color.LIGHT_GRAY);
         AutoRotateButton.setBackground(Color.LIGHT_GRAY);
         ExitButton.setBackground(Color.RED);
+
+        AutoRotateButton.addActionListener(this);
+        AutoRotateButton.setText("↺");
 
         // Sliders for XZ and XY movement
         xzSlider = new JSlider(JSlider.HORIZONTAL, -50, 50, 0);
@@ -273,7 +278,7 @@ public class GUI implements ActionListener, ChangeListener {
 
         idleCheckTimer = new Timer(500, e -> {
             if (System.currentTimeMillis() - lastUserInputTime > IDLE_TIMEOUT) {
-                if (!autoRotateTimer.isRunning()) {
+                if (autoRotationEnabled && !autoRotateTimer.isRunning()) {
                     autoRotateTimer.start();
                 }
             }
@@ -387,14 +392,25 @@ public class GUI implements ActionListener, ChangeListener {
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == ExitButton) {
             System.exit(0);
-        }
-        if (e.getSource() == ClickButton) {
+        } else if (e.getSource() == ClickButton) {
             clicks++;
-        }
-        if (e.getSource() == ResetButton) {
+        } else if (e.getSource() == ResetButton) {
             clicks = 0;
             xzSlider.setValue(0);
             xySlider.setValue(0);
+        } else if (e.getSource() == AutoRotateButton) {
+            // Toggle auto-rotation state
+            autoRotationEnabled = !autoRotationEnabled;
+            AutoRotateButton.setText(autoRotationEnabled ? "↺" : "▶");
+            if (!autoRotationEnabled) {
+                // Stop auto-rotation immediately when disabled
+                autoRotateTimer.stop();
+            } else {
+                // If enabled and idle, start auto-rotation
+                if (System.currentTimeMillis() - lastUserInputTime > IDLE_TIMEOUT) {
+                    autoRotateTimer.start();
+                }
+            }
         }
         label.setText("Number of clicks:  " + clicks);
     }
