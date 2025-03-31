@@ -386,13 +386,16 @@ public class GUI implements ActionListener, ChangeListener {
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == ExitButton) {
             System.exit(0);
-        } else if (e.getSource() == ClickButton) {
+        } 
+        if (e.getSource() == ClickButton) {
             clicks++;
-        } else if (e.getSource() == ResetButton) {
+        } 
+        if (e.getSource() == ResetButton) {
             clicks = 0;
             xzSlider.setValue(0);
             xySlider.setValue(0);
-        } else if (e.getSource() == AutoRotateButton) {
+        } 
+        if (e.getSource() == AutoRotateButton) {
             // Toggle auto-rotation state
             autoRotationEnabled = !autoRotationEnabled;
             AutoRotateButton.setText(autoRotationEnabled ? "↺" : "▶");
