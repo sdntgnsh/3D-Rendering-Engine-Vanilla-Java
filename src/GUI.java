@@ -296,18 +296,23 @@ public class GUI implements ActionListener, ChangeListener {
                                     barySum += triArea;
                                 }
                                 double epsilon = 0.005;
-                                if (Math.abs(barySum - polyArea) < epsilon) {
+                                if(Math.abs(barySum - polyArea) < epsilon){
+                                    double depth = 0.0;
+                                    for(int q = 0; q < poly.number_of_sides; ++q){
+                                        depth += (baryArea[q] * poly.vertex_array.get(q).z);
+                                    }
+                                    int zIndex = y * img.getWidth() + x;
+                                    if (zBuffer[zIndex] < depth) {
 
-                                    // double depth = b1 * v1.z + b2 * v2.z + b3 * v3.z;
-                                    // int zIndex = y * img.getWidth() + x;
-                                    // if (zBuffer[zIndex] < depth) {
-                                    //     img.setRGB(x, y, getShade(poly.color, angleCos).getRGB());
-                                    //     zBuffer[zIndex] = depth;
-                                    // }
-
-                                    
-
-                                    img.setRGB(x, y, poly.color.getRGB());
+                                        // double depth = b1 * v1.z + b2 * v2.z + b3 * v3.z;
+                                        // int zIndex = y * img.getWidth() + x;
+                                        // if (zBuffer[zIndex] < depth) {
+                                        //     img.setRGB(x, y, getShade(poly.color, angleCos).getRGB());
+                                        //     zBuffer[zIndex] = depth;
+                                        // }
+                                        zBuffer[zIndex] = depth;
+                                        img.setRGB(x, y, poly.color.getRGB());
+                                    }
                                 }
                             }
                         }
