@@ -114,16 +114,16 @@ public class GUI implements ActionListener, ChangeListener {
                 // Rendering magic will happen here
                 List<Square> sqare_list = new ArrayList<>();
 
-                List<Polygon> triangle_list = new ArrayList<>();
+                List<Polygon> polygon_list = new ArrayList<>();
 
                 List<Vertex[]> Shape_Coords = new ArrayList<>(); 
 
                 
             // Adding coordinates to Shape_Coords
-                Shape_Coords = CoordinateCreator.create_triangle_coords(200);
+                Shape_Coords = CoordinateCreator.create_square_coords(200);
 
                 for(Vertex[] coords : Shape_Coords){
-                    triangle_list.add(new Polygon(coords, Color.RED));
+                    polygon_list.add(new Polygon(coords, Color.RED));
                 }
 
 
@@ -148,7 +148,7 @@ public class GUI implements ActionListener, ChangeListener {
                 g2.translate(getWidth() / 2, getHeight() / 2);
                 g2.setColor(Color.WHITE);
                 
-                for (Polygon t : triangle_list) {
+                for (Polygon t : polygon_list) {
 
 
                     for(int i = 0; i < t.number_of_sides; i++){
