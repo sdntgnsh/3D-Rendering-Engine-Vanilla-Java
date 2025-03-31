@@ -40,7 +40,7 @@ public class GUI implements ActionListener, ChangeListener {
         frame.getContentPane().setBackground(Color.BLACK);
 
         // Click, Reset, and Exit Buttons
-        ClickButton = new JButton("Click Me");
+        ClickButton = new JButton("Click Me To Toggle Shape");
         ResetButton = new JButton("Reset"); 
         ExitButton = new JButton("Exit Application");
         AutoRotateButton = new JButton("↺");
@@ -129,7 +129,12 @@ public class GUI implements ActionListener, ChangeListener {
 
                 
             // Adding coordinates to Shape_Coords
-                Shape_Coords = CoordinateCreator.create_square_coords(200);
+                if(clicks % 2 == 0){
+                    Shape_Coords = CoordinateCreator.create_triangle_coords(200);
+                }
+                else{
+                    Shape_Coords = CoordinateCreator.create_square_coords(200);
+                }
 
                 for(Vertex[] coords : Shape_Coords){
                     polygon_list.add(new Polygon(coords, Color.RED));
