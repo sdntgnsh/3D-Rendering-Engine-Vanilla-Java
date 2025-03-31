@@ -7,9 +7,6 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-
-
-
 public class GUI implements ActionListener, ChangeListener {
     private int clicks = 0;
     private JLabel label = new JLabel("Number of clicks:  0");
@@ -22,14 +19,12 @@ public class GUI implements ActionListener, ChangeListener {
     public GUI() {
         frame = new JFrame("Main Application");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        // frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setLayout(new BorderLayout());
         frame.setUndecorated(true);
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         frame.setSize(screenSize.width, screenSize.height);
     
-        // frame.setSize(1000, 800);
         frame.getContentPane().setBackground(Color.BLACK);
 
         // Click, Reset, and Exit Buttons
@@ -51,6 +46,7 @@ public class GUI implements ActionListener, ChangeListener {
         ResetButton.setBackground(Color.LIGHT_GRAY);
         AutoRotateButton.setBackground(Color.LIGHT_GRAY);
         ExitButton.setBackground(Color.RED);
+
         // Sliders for XZ and XY movement
         xzSlider = new JSlider(JSlider.HORIZONTAL, -50, 50, 0);
         xySlider = new JSlider(JSlider.VERTICAL, -50, 50, 0);
@@ -62,7 +58,6 @@ public class GUI implements ActionListener, ChangeListener {
         xyPanel = new JPanel(new BorderLayout());
         xyPanel.setBackground(Color.GRAY);
         xyPanel.add(xySlider, BorderLayout.CENTER);
-        
 
         // Slider properties for smooth scrolling feel
         xzSlider.setMajorTickSpacing(10);
@@ -101,14 +96,10 @@ public class GUI implements ActionListener, ChangeListener {
         xzSlider.setPreferredSize(new Dimension(400, 30)); 
         xySlider.setPreferredSize(new Dimension(25, 400));
         
-        
-
         // Labels for sliders
         xzLabel = new JLabel("XZ Position: 0", SwingConstants.CENTER);
         xyLabel = new JLabel("XY Position: 0", SwingConstants.CENTER);
 
-
-        
         // Render Panel to show 3D Render
         renderPanel = new JPanel() {
             public void paintComponent(Graphics g) {
@@ -161,28 +152,15 @@ public class GUI implements ActionListener, ChangeListener {
 
         xySlider.addChangeListener(e -> renderPanel.repaint());
         xzSlider.addChangeListener(e -> renderPanel.repaint());
-        // Create a panel to hold both sliders inside renderPanel
-        // sliderPanel = new JPanel(new BorderLayout());
-        // sliderPanel.setOpaque(false);  // Make it blend with renderPanel
-
-        // Add sliders inside the sliderPanel
-        // sliderPanel.add(xzSlider, BorderLayout.SOUTH);
-        // sliderPanel.add(xySlider, BorderLayout.WEST);
-
-        // Add sliderPanel inside renderPanel
         renderPanel.setLayout(new BorderLayout());
-        // renderPanel.add(sliderPanel, BorderLayout.CENTER);
         frame.addComponentListener(new ComponentAdapter() {
             public void componentResized(ComponentEvent e) {
                 xzSlider.setPreferredSize(new Dimension(renderPanel.getWidth(), 30));
                 xySlider.setPreferredSize(new Dimension(30, renderPanel.getHeight()));
-        
                 renderPanel.revalidate();
             }
         });
         
-
-
         // Panel for buttons (RIGHT SIDE)
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridLayout(3, 1, 20, 20)); // 3 buttons stacked vertically
@@ -192,15 +170,6 @@ public class GUI implements ActionListener, ChangeListener {
         buttonPanel.add(ExitButton);
         buttonPanel.setBackground(Color.GRAY);
 
-        // Ensure button panel matches the render panel height
-        // frame.addComponentListener(new ComponentAdapter() {
-        //     public void componentResized(ComponentEvent e) {
-        //         // buttonPanel.setPreferredSize(new Dimension(400, renderPanel.getHeight()));
-        //         buttonPanel.revalidate();
-        //     }
-        // });
-        
-        
         // Panel for labels (TOP)
         JPanel topPanel = new JPanel(new GridLayout(2, 1));
         topPanel.add(label);
@@ -212,67 +181,29 @@ public class GUI implements ActionListener, ChangeListener {
         southPanel.setOpaque(false);
         southPanel.setBackground(Color.GRAY);
 
-        
-        
-        //blank panel below button
-
         JPanel blankPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         blankPanel.setOpaque(true);
         blankPanel.setBackground(Color.GRAY);
-
         blankPanel.setPreferredSize(new Dimension(screenSize.width/6 + 40, 30));
        
-        // southPanel.add(blankPanel, BorderLayout.EAST);
-
-
-        // Create bottom-left panel for the small button
         JPanel AutoRotatePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        AutoRotatePanel.setOpaque(true); // Ensure background color is visible
+        AutoRotatePanel.setOpaque(true);
         AutoRotatePanel.setBackground(Color.GRAY);  
-        
-        // Add the XZ slider inside the southPanel
-        // southPanel.add(xzSlider, BorderLayout.CENTER);
-        // southPanel.add(AutoRotatePanel, BorderLayout.WEST);
-
-
         AutoRotatePanel.add(AutoRotateButton);
-
-
         blankPanel.add(AutoRotatePanel, BorderLayout.EAST);
-        // Add AutoRotatePanel to the southPanel
-        // southPanel.add(AutoRotatePanel, BorderLayout.WEST);
 
-        // Modify sliderPanel to hold the updated southPanel
-        // sliderPanel.setLayout(new BorderLayout());
-        // sliderPanel.add(xySlider, BorderLayout.WEST);
-         // Keeps both the slider & button
-        // southPanel.add(blankPanel, BorderLayout.EAST);
-
-
-        // Add Components to Frame
-        frame.add(topPanel, BorderLayout.NORTH);
-
-        
-        frame.add(renderPanel, BorderLayout.CENTER);
-        frame.add(buttonPanel, BorderLayout.EAST); // Move buttons to the RIGHT side
-        
         southPanel.add(blankPanel, BorderLayout.EAST);
         southPanel.add(AutoRotatePanel, BorderLayout.WEST);
-        
         frame.add(southPanel, BorderLayout.SOUTH);
-        
-
         southPanel.add(xzSlider, BorderLayout.CENTER);
-
-        // frame.add(xzSlider, BorderLayout.SOUTH); /// 
-        // xzPanel.add(blankPanel, BorderLayout.EAST);
         frame.add(xySlider, BorderLayout.WEST);  // Keep XY slider on left
-        // frame.add(xzPanel, BorderLayout.SOUTH);
 
-        // xzPanel.add(southPanel, BorderLayout.CENTER);
-        // sliderPanel.add(southPanel, BorderLayout.SOUTH);
-
-        // frame.add(southPanel, BorderLayout.SOUTH);
+        frame.add(topPanel, BorderLayout.NORTH);
+        frame.add(renderPanel, BorderLayout.CENTER);
+        frame.add(buttonPanel, BorderLayout.EAST); // Buttons on the RIGHT side
+        
+        // Add key bindings for arrow keys and WASD
+        addKeyBindings();
 
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
@@ -280,13 +211,63 @@ public class GUI implements ActionListener, ChangeListener {
             public void componentResized(ComponentEvent e) {
                 xzSlider.setPreferredSize(new Dimension(renderPanel.getWidth(), 30));
                 xySlider.setPreferredSize(new Dimension(30, renderPanel.getHeight()));
-        
                 xzPanel.revalidate();
                 xyPanel.revalidate();
             }
         });
-        
-        
+    }
+
+    // Method to add key bindings to the root pane
+    private void addKeyBindings() {
+        JRootPane rootPane = frame.getRootPane();
+        InputMap im = rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = rootPane.getActionMap();
+
+        // Left movement: left arrow and 'A'
+        im.put(KeyStroke.getKeyStroke("LEFT"), "moveLeft");
+        im.put(KeyStroke.getKeyStroke('A'), "moveLeft");
+        am.put("moveLeft", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xzSlider.setValue(xzSlider.getValue() - 1);
+            }
+        });
+
+        // FOR MAKING ARROW KEYS WORK AS INTENDED
+        xzSlider.setFocusable(false);
+        xySlider.setFocusable(false);
+
+
+
+        // Right movement: right arrow and 'D'
+        im.put(KeyStroke.getKeyStroke("RIGHT"), "moveRight");
+        im.put(KeyStroke.getKeyStroke('D'), "moveRight");
+        am.put("moveRight", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xzSlider.setValue(xzSlider.getValue() + 1);
+            }
+        });
+
+        // Up movement: up arrow and 'W'
+        im.put(KeyStroke.getKeyStroke("UP"), "moveUp");
+        im.put(KeyStroke.getKeyStroke('W'), "moveUp");
+        am.put("moveUp", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xySlider.setValue(xySlider.getValue() + 1);
+            }
+        });
+
+        // Down movement: down arrow and 'S'
+        im.put(KeyStroke.getKeyStroke("DOWN"), "moveDown");
+        im.put(KeyStroke.getKeyStroke('S'), "moveDown");
+        am.put("moveDown", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xySlider.setValue(xySlider.getValue() - 1);
+            }
+        });
     }
 
     // Handle button clicks
@@ -316,16 +297,9 @@ public class GUI implements ActionListener, ChangeListener {
     }
 
     public static void main(String[] args) {
-
-        // JFrame frame = new JFrame("Debug Window");
-        // frame.setSize(300, 200);
-        // frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        // frame.add(new JLabel("If you can see this, the app is running!"));
-        // frame.setVisible(true);
         new GUI();
     }
 }
-
 
 class Vertex {
     double x;
