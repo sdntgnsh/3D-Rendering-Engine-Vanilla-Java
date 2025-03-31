@@ -255,18 +255,13 @@ public class GUI implements ActionListener, ChangeListener {
                         minY = (int)Math.max(0, Math.ceil(minY));
                         maxY = (int)Math.min(img.getHeight() - 1, Math.floor(maxY));
                         
-                        double polyArea = 0;
-
-                        for(int i = 0; i < poly.number_of_sides; i++){
-
-                            if(i == poly.number_of_sides - 1){
-                                polyArea += (poly.vertex_array.get(i).x*poly.vertex_array.get(0).y);
-                                polyArea -= (poly.vertex_array.get(0).x*poly.vertex_array.get(i).y);
-                                break;
-                            }
-                            polyArea += (poly.vertex_array.get(i).x*poly.vertex_array.get(i + 1).y);
-                            polyArea -= (poly.vertex_array.get(i + 1).x*poly.vertex_array.get(i).y);
+                       double polyArea = 0.0;
+                        for (int i = 0; i < poly.number_of_sides; i++) {
+                            int j = (i + 1) % poly.number_of_sides;  // Wrap-around for the last vertex
+                            polyArea += poly.vertex_array.get(i).x * poly.vertex_array.get(j).y;
+                            polyArea -= poly.vertex_array.get(j).x * poly.vertex_array.get(i).y;
                         }
+                        polyArea = Math.abs(polyArea) / 2.0;
 
 
 
@@ -281,18 +276,27 @@ public class GUI implements ActionListener, ChangeListener {
                                 // baryArea[2] = ((y - v2.y) * (v1.x - v2.x) + (v1.y - v2.y) * (v2.x - x)) / polyArea;
                                 Double barySum = 0.0;
                                 boolean baryFlag = true;
+                                
                                 for (int i = 0; i < poly.number_of_sides; i++) {
-
                                     int prev = (i + poly.number_of_sides - 1) % poly.number_of_sides;
                                     int next = (i + 1) % poly.number_of_sides;
-                                    baryArea[i] = ((y - poly.vertex_array.get(prev).y) * (poly.vertex_array.get(next).x - poly.vertex_array.get(prev).x) +
-                                            (poly.vertex_array.get(next).y - poly.vertex_array.get(prev).y) * (poly.vertex_array.get(prev).x - x));
-                                    // baryArea[i] /= polyArea; 
-                                    baryFlag &= (baryArea[i] >= 0 && baryArea[i] <= 1);
-                                    barySum += baryArea[i];
+
+                                    // Get the previous and next vertices from the polygon
+                                    Vertex A = poly.vertex_array.get(prev);
+                                    Vertex B = poly.vertex_array.get(next);
+
+                                    // Compute the area of triangle (A, B, P) where P = (x, y)
+                                    double triArea = Math.abs(
+                                        (x - A.x) * (B.y - A.y) - (B.x - A.x) * (y - A.y)
+                                    ) / 2.0;
+
+                                    baryArea[i] = triArea; 
+                                    // Optionally, check that the triangle area is not negative (always true because of abs)
+                                    baryFlag &= (triArea >= 0);
+                                    barySum += triArea;
                                 }
-                                
-                                if (barySum <= polyArea) {
+                                double epsilon = 0.005;
+                                if (Math.abs(barySum - polyArea) < epsilon) {
 
                                     // double depth = b1 * v1.z + b2 * v2.z + b3 * v3.z;
                                     // int zIndex = y * img.getWidth() + x;
