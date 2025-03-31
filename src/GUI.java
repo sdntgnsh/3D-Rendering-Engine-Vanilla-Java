@@ -27,7 +27,8 @@ public class GUI implements ActionListener, ChangeListener {
     private double totalRotationAngleXY = 0.0;
     private static final double AUTO_ROTATION_SPEED = 1.0; 
     private boolean isAutoRotating = false; // Flag to block slider feedback
-    private boolean ToggleAutoRotate = true;
+
+    private boolean autoRotationEnabled = true;
 
     public GUI() {
         frame = new JFrame("Main Application");
@@ -54,12 +55,14 @@ public class GUI implements ActionListener, ChangeListener {
         ClickButton.addActionListener(this);
         ResetButton.addActionListener(this);
         ExitButton.addActionListener(this);
-        AutoRotateButton.addActionListener(this);
 
         ClickButton.setBackground(Color.LIGHT_GRAY);
         ResetButton.setBackground(Color.LIGHT_GRAY);
         AutoRotateButton.setBackground(Color.LIGHT_GRAY);
         ExitButton.setBackground(Color.RED);
+
+        AutoRotateButton.addActionListener(this);
+        AutoRotateButton.setText("↺");
 
         // Sliders for XZ and XY movement
         xzSlider = new JSlider(JSlider.HORIZONTAL, -50, 50, 0);
@@ -160,24 +163,24 @@ public class GUI implements ActionListener, ChangeListener {
                 g2.translate(getWidth() / 2, getHeight() / 2);
                 g2.setColor(Color.WHITE);
                 
-                for (Polygon t : polygon_list) {
+                for (Polygon poly : polygon_list) {
 
 
-                    for(int i = 0; i < t.number_of_sides; i++){
+                    for(int i = 0; i < poly.number_of_sides; i++){
 
-                        t.vertex_array.set(i, transform.transform(t.vertex_array.get(i)) );
+                        poly.vertex_array.set(i, transform.transform(poly.vertex_array.get(i)) );
                     }
 
 
                     Path2D path = new Path2D.Double();
-                    Vertex prevVertex = t.vertex_array.get(0);
-                    for(Vertex v : t.vertex_array){ 
+                    Vertex prevVertex = poly.vertex_array.get(0);
+                    for(Vertex v : poly.vertex_array){ 
                         path.moveTo(prevVertex.x, prevVertex.y);
                         path.lineTo(v.x, v.y);
                         prevVertex = v;
                     }
                     path.moveTo(prevVertex.x, prevVertex.y);
-                    path.lineTo(t.vertex_array.get(0).x, t.vertex_array.get(0).y);
+                    path.lineTo(poly.vertex_array.get(0).x, poly.vertex_array.get(0).y);
 
                     path.closePath();
                     g2.draw(path);
@@ -268,8 +271,8 @@ public class GUI implements ActionListener, ChangeListener {
             });
 
         idleCheckTimer = new Timer(500, e -> {
-            if (System.currentTimeMillis() - lastUserInputTime > IDLE_TIMEOUT && ToggleAutoRotate == false) {
-                if (!autoRotateTimer.isRunning()) {
+            if (System.currentTimeMillis() - lastUserInputTime > IDLE_TIMEOUT) {
+                if (autoRotationEnabled && !autoRotateTimer.isRunning()) {
                     autoRotateTimer.start();
                 }
             }
@@ -381,32 +384,27 @@ public class GUI implements ActionListener, ChangeListener {
 
     // Handle button clicks
     public void actionPerformed(ActionEvent e) {
-        if(e.getSource() == AutoRotateButton){
-            if(ToggleAutoRotate == false){
-                // If auto-rotation is active, stop it:
-                ToggleAutoRotate = true;
-                autoRotateTimer.stop();
-                // Optionally update UI (e.g., change button background)
-                AutoRotateButton.setBackground(Color.LIGHT_GRAY);
-            }
-            else{
-                // If auto-rotation is off, start it:
-                ToggleAutoRotate = false;
-                autoRotateTimer.start();
-                // Optionally update UI (e.g., change button background)
-                AutoRotateButton.setBackground(Color.GREEN);
-            }
-        }
         if (e.getSource() == ExitButton) {
             System.exit(0);
-        }
-        if (e.getSource() == ClickButton) {
+        } else if (e.getSource() == ClickButton) {
             clicks++;
-        }
-        if (e.getSource() == ResetButton) {
-            // clicks = 0;
+        } else if (e.getSource() == ResetButton) {
+            clicks = 0;
             xzSlider.setValue(0);
             xySlider.setValue(0);
+        } else if (e.getSource() == AutoRotateButton) {
+            // Toggle auto-rotation state
+            autoRotationEnabled = !autoRotationEnabled;
+            AutoRotateButton.setText(autoRotationEnabled ? "↺" : "▶");
+            if (!autoRotationEnabled) {
+                // Stop auto-rotation immediately when disabled
+                autoRotateTimer.stop();
+            } else {
+                // If enabled and idle, start auto-rotation
+                if (System.currentTimeMillis() - lastUserInputTime > IDLE_TIMEOUT) {
+                    autoRotateTimer.start();
+                }
+            }
         }
         label.setText("Number of clicks:  " + clicks);
     }
