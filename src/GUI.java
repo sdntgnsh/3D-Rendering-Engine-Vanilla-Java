@@ -223,9 +223,16 @@ public class GUI implements ActionListener, ChangeListener {
         InputMap im = rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap am = rootPane.getActionMap();
 
+
+         // FOR MAKING ARROW KEYS WORK AS INTENDED
+        xzSlider.setFocusable(false);
+        xySlider.setFocusable(false);
+
+
         // Left movement: left arrow and 'A'
         im.put(KeyStroke.getKeyStroke("LEFT"), "moveLeft");
         im.put(KeyStroke.getKeyStroke('A'), "moveLeft");
+        im.put(KeyStroke.getKeyStroke('a'), "moveLeft");
         am.put("moveLeft", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -233,14 +240,12 @@ public class GUI implements ActionListener, ChangeListener {
             }
         });
 
-        // FOR MAKING ARROW KEYS WORK AS INTENDED
-        xzSlider.setFocusable(false);
-        xySlider.setFocusable(false);
-
+       
 
 
         // Right movement: right arrow and 'D'
         im.put(KeyStroke.getKeyStroke("RIGHT"), "moveRight");
+        im.put(KeyStroke.getKeyStroke('d'), "moveRight");
         im.put(KeyStroke.getKeyStroke('D'), "moveRight");
         am.put("moveRight", new AbstractAction() {
             @Override
@@ -252,6 +257,7 @@ public class GUI implements ActionListener, ChangeListener {
         // Up movement: up arrow and 'W'
         im.put(KeyStroke.getKeyStroke("UP"), "moveUp");
         im.put(KeyStroke.getKeyStroke('W'), "moveUp");
+        im.put(KeyStroke.getKeyStroke('w'), "moveUp");
         am.put("moveUp", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -262,6 +268,7 @@ public class GUI implements ActionListener, ChangeListener {
         // Down movement: down arrow and 'S'
         im.put(KeyStroke.getKeyStroke("DOWN"), "moveDown");
         im.put(KeyStroke.getKeyStroke('S'), "moveDown");
+        im.put(KeyStroke.getKeyStroke('s'), "moveDown");
         am.put("moveDown", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
