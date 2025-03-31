@@ -192,7 +192,7 @@ public class GUI implements ActionListener, ChangeListener {
                     Shape_Coords = CoordinateCreator.create_triangle_coords(75);
                 }
                 else{
-                    Shape_Coords = CoordinateCreator.create_square_coords(75);
+                    Shape_Coords = CoordinateCreator.create_square_coords(50);
                 }
                 Color colorArr[] = {Color.RED,Color.WHITE, Color.GRAY};
 
