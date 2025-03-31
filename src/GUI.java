@@ -58,7 +58,7 @@ public class GUI implements ActionListener, ChangeListener {
 
         ClickButton.setBackground(Color.LIGHT_GRAY);
         ResetButton.setBackground(Color.LIGHT_GRAY);
-        AutoRotateButton.setBackground(Color.LIGHT_GRAY);
+        AutoRotateButton.setBackground(Color.GREEN);
         ExitButton.setBackground(Color.RED);
 
         AutoRotateButton.addActionListener(this);
