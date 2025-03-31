@@ -11,11 +11,12 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 public class GUI implements ActionListener, ChangeListener {
-    private int clicks = 0;
+    private int clicks = 0, colorCounter = 0;
     private JLabel label = new JLabel("Number of clicks:  0");
     private JLabel WireFramelabel = new JLabel("Toggle WireFrame:  0");
+    private JLabel ChangeColorLabel = new JLabel("Change Color:  0");
     private JFrame frame;
-    private JButton ClickButton, ResetButton, ExitButton, AutoRotateButton, ToggleWireframeButton;
+    private JButton ClickButton, ResetButton, ExitButton, AutoRotateButton, ToggleWireframeButton, ChangeColorButton;
     private JLabel xzLabel, xyLabel;
     private JSlider xzSlider, xySlider;
     private JPanel renderPanel, xzPanel, xyPanel, sliderPanel;
@@ -49,11 +50,13 @@ public class GUI implements ActionListener, ChangeListener {
         ResetButton = new JButton("Reset (R)"); 
         ExitButton = new JButton("Exit Application (Esc)");
         ToggleWireframeButton = new JButton("Toggle WireFrame (Q)");
+        ChangeColorButton = new JButton("Change Color (E)");
         AutoRotateButton = new JButton("");
         Dimension buttonSize = new Dimension(screenSize.width/6, screenSize.width/50);
         ClickButton.setPreferredSize(buttonSize);
         ResetButton.setPreferredSize(buttonSize);
         ExitButton.setPreferredSize(buttonSize);
+        ChangeColorButton.setPreferredSize(buttonSize);
         ToggleWireframeButton.setPreferredSize(buttonSize);
         AutoRotateButton.setPreferredSize(new Dimension(20, 20));
 
@@ -61,10 +64,12 @@ public class GUI implements ActionListener, ChangeListener {
         ResetButton.addActionListener(this);
         ExitButton.addActionListener(this);
         ToggleWireframeButton.addActionListener(this);
+        ChangeColorButton.addActionListener(this);
 
         ClickButton.setBackground(Color.LIGHT_GRAY);
         ResetButton.setBackground(Color.LIGHT_GRAY);
         ToggleWireframeButton.setBackground(Color.LIGHT_GRAY);
+        ChangeColorButton.setBackground(Color.LIGHT_GRAY);
         AutoRotateButton.setBackground(Color.GREEN);
         ExitButton.setBackground(Color.RED);
 
@@ -108,6 +113,7 @@ public class GUI implements ActionListener, ChangeListener {
         inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), "exitApp");
         inputMap.put(KeyStroke.getKeyStroke("Q"), "toggleWireframe");
         inputMap.put(KeyStroke.getKeyStroke("SPACE"), "toggleAutoRotate");
+        inputMap.put(KeyStroke.getKeyStroke("E"), "changeColor");
         
         actionMap.put("toggleShape", new AbstractAction() {
             @Override
@@ -120,6 +126,12 @@ public class GUI implements ActionListener, ChangeListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 ResetButton.doClick();
+            }
+        });
+        actionMap.put("changeColor", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ChangeColorButton.doClick();
             }
         });
         
@@ -442,18 +454,21 @@ public class GUI implements ActionListener, ChangeListener {
         
         // Panel for buttons (RIGHT SIDE)
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(4, 1, 20, 20)); // 3 buttons stacked vertically
+        buttonPanel.setLayout(new GridLayout(5, 1, 20, 20)); // 3 buttons stacked vertically
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20)); // Padding
         buttonPanel.add(ClickButton);
-        buttonPanel.add(ResetButton);
         buttonPanel.add(ToggleWireframeButton);
+        buttonPanel.add(ChangeColorButton);
+        buttonPanel.add(ResetButton);
         buttonPanel.add(ExitButton);
         buttonPanel.setBackground(Color.GRAY);
-
+        
         // Panel for labels (TOP)
-        JPanel topPanel = new JPanel(new GridLayout(2, 1));
+        JPanel topPanel = new JPanel(new GridLayout(1, 3, 20, 20));
+        topPanel.setBorder(BorderFactory.createEmptyBorder(7, 7, 7, 7)); // Padding
         topPanel.add(label);
         topPanel.add(WireFramelabel);
+        topPanel.add(ChangeColorLabel);
         // topPanel.add(xzLabel);
         // topPanel.add(xyLabel);
         topPanel.setBackground(Color.GRAY);
@@ -634,6 +649,11 @@ public class GUI implements ActionListener, ChangeListener {
         if (e.getSource() == ClickButton) {
             renderPanel.repaint();
             clicks++;
+        } 
+        if (e.getSource() == ChangeColorButton) {
+            renderPanel.repaint();
+            colorCounter++;
+            ChangeColorLabel.setText("Change Color:  " + colorCounter);
         } 
         if (e.getSource() == ResetButton) {
             clicks = 0;
