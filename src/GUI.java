@@ -273,18 +273,39 @@ public class GUI implements ActionListener, ChangeListener {
 
                         for (int y = minY; y <= maxY; y++) {
                             for (int x = minX; x <= maxX; x++) {
-                                boolean inside = false;
+                                double inside[] = {0.0, 0.0,0.0,0.0};
+                                double inside2[] = {Double.POSITIVE_INFINITY, 0.0,0.0,0.0};
                                 
                                 if (poly.number_of_sides == 3) {
                                     inside = isPointInsideTriangle(x, y, poly.vertex_array.get(0), poly.vertex_array.get(1), poly.vertex_array.get(2));
+
                                 } else if (poly.number_of_sides == 4) {
                                     // Split the quad into two triangles
-                                    inside = isPointInsideTriangle(x, y, poly.vertex_array.get(0), poly.vertex_array.get(1), poly.vertex_array.get(2)) ||
-                                            isPointInsideTriangle(x, y, poly.vertex_array.get(0), poly.vertex_array.get(2), poly.vertex_array.get(3));
-                                }
+                                    inside = isPointInsideTriangle(x, y, poly.vertex_array.get(0), poly.vertex_array.get(1), poly.vertex_array.get(2));
+                                    inside2 = isPointInsideTriangle(x, y, poly.vertex_array.get(0), poly.vertex_array.get(2), poly.vertex_array.get(3));
 
-                                if (inside) {
-                                    img.setRGB(x, y, poly.color.getRGB());
+                                    // for(int i = 0; i < inside.length; i++){
+                                    //     inside[i] += inside2[i];
+                                    // }
+
+
+
+                                }
+                                double epsilon = 0.0000005;
+                                
+                                if (Math.abs(inside[0] - (inside[1] + inside[2] + inside[3])) < epsilon || Math.abs(inside2[0] - (inside2[1] + inside2[2] + inside2[3])) < epsilon) {
+                                    double depth = 0.0;
+                                    for (int i = 0; i < poly.number_of_sides; i++) {
+                                        depth += inside[i] * poly.vertex_array.get(i).z;
+                                    }
+                                    int zinx = y*img.getWidth() + x;
+
+                                    if(zBuffer[zinx] <= depth){
+                                        zBuffer[zinx] = depth;
+                                        img.setRGB(x, y, poly.color.getRGB());
+                                    }
+                                    // img.setRGB(x, y, poly.color.getRGB());
+
                                 }
                             }
                         }
@@ -586,18 +607,18 @@ public class GUI implements ActionListener, ChangeListener {
 
     //HERE LIES GPT
 
-     private boolean isPointInsideTriangle(int px, int py, Vertex v1, Vertex v2, Vertex v3) {
-                            double areaOrig = triangleArea(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y);
-                            double area1 = triangleArea(px, py, v2.x, v2.y, v3.x, v3.y);
-                            double area2 = triangleArea(v1.x, v1.y, px, py, v3.x, v3.y);
-                            double area3 = triangleArea(v1.x, v1.y, v2.x, v2.y, px, py);
+     private double[] isPointInsideTriangle(int px, int py, Vertex v1, Vertex v2, Vertex v3) {
+        double areaOrig = triangleArea(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y);
+        double area1 = triangleArea(px, py, v2.x, v2.y, v3.x, v3.y);
+        double area2 = triangleArea(v1.x, v1.y, px, py, v3.x, v3.y);
+        double area3 = triangleArea(v1.x, v1.y, v2.x, v2.y, px, py);
+        double arr[] = {areaOrig, area1, area2, area3};
+        return arr;
+    }
 
-                            return Math.abs(areaOrig - (area1 + area2 + area3)) < 1e-5;
-                        }
-
-                        private double triangleArea(double x1, double y1, double x2, double y2, double x3, double y3) {
-                            return Math.abs((x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / 2.0);
-                        }
+    private double triangleArea(double x1, double y1, double x2, double y2, double x3, double y3) {
+        return Math.abs((x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / 2.0);
+    }
 
 
 
