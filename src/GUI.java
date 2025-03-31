@@ -42,10 +42,10 @@ public class GUI implements ActionListener, ChangeListener {
         frame.getContentPane().setBackground(Color.BLACK);
 
         // Click, Reset, and Exit Buttons
-        ClickButton = new JButton("Click Me To Toggle Shape");
+        ClickButton = new JButton("Toggle Shape");
         ResetButton = new JButton("Reset"); 
         ExitButton = new JButton("Exit Application");
-        AutoRotateButton = new JButton("↺");
+        AutoRotateButton = new JButton("");
         Dimension buttonSize = new Dimension(screenSize.width/6, screenSize.width/50);
         ClickButton.setPreferredSize(buttonSize);
         ResetButton.setPreferredSize(buttonSize);
@@ -398,7 +398,7 @@ public class GUI implements ActionListener, ChangeListener {
         if (e.getSource() == AutoRotateButton) {
             // Toggle auto-rotation state
             autoRotationEnabled = !autoRotationEnabled;
-            AutoRotateButton.setText(autoRotationEnabled ? "↺" : "▶");
+            // AutoRotateButton.setText(autoRotationEnabled ? "↺" : "▶");
             if (!autoRotationEnabled) {
                 AutoRotateButton.setBackground(Color.RED);
                 // Stop auto-rotation immediately when disabled
