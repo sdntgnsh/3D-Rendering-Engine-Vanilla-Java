@@ -2,13 +2,13 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-
-
 
 public class GUI implements ActionListener, ChangeListener {
     private int clicks = 0;
@@ -22,14 +22,12 @@ public class GUI implements ActionListener, ChangeListener {
     public GUI() {
         frame = new JFrame("Main Application");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        // frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setLayout(new BorderLayout());
         frame.setUndecorated(true);
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         frame.setSize(screenSize.width, screenSize.height);
     
-        // frame.setSize(1000, 800);
         frame.getContentPane().setBackground(Color.BLACK);
 
         // Click, Reset, and Exit Buttons
@@ -51,6 +49,7 @@ public class GUI implements ActionListener, ChangeListener {
         ResetButton.setBackground(Color.LIGHT_GRAY);
         AutoRotateButton.setBackground(Color.LIGHT_GRAY);
         ExitButton.setBackground(Color.RED);
+
         // Sliders for XZ and XY movement
         xzSlider = new JSlider(JSlider.HORIZONTAL, -50, 50, 0);
         xySlider = new JSlider(JSlider.VERTICAL, -50, 50, 0);
@@ -62,7 +61,6 @@ public class GUI implements ActionListener, ChangeListener {
         xyPanel = new JPanel(new BorderLayout());
         xyPanel.setBackground(Color.GRAY);
         xyPanel.add(xySlider, BorderLayout.CENTER);
-        
 
         // Slider properties for smooth scrolling feel
         xzSlider.setMajorTickSpacing(10);
@@ -101,14 +99,10 @@ public class GUI implements ActionListener, ChangeListener {
         xzSlider.setPreferredSize(new Dimension(400, 30)); 
         xySlider.setPreferredSize(new Dimension(25, 400));
         
-        
-
         // Labels for sliders
         xzLabel = new JLabel("XZ Position: 0", SwingConstants.CENTER);
         xyLabel = new JLabel("XY Position: 0", SwingConstants.CENTER);
 
-
-        
         // Render Panel to show 3D Render
         renderPanel = new JPanel() {
             public void paintComponent(Graphics g) {
@@ -118,41 +112,85 @@ public class GUI implements ActionListener, ChangeListener {
                 g2.fillRect(0, 0, getWidth(), getHeight());
                 
                 // Rendering magic will happen here
-                List<Triangle> tris = new ArrayList<>();
-                tris.add(new Triangle(new Vertex(100, 100, 100),
-                                    new Vertex(-100, -100, 100),
-                                    new Vertex(-100, 100, -100),
-                                    Color.WHITE));
-                tris.add(new Triangle(new Vertex(100, 100, 100),
-                                    new Vertex(-100, -100, 100),
-                                    new Vertex(100, -100, -100),
-                                    Color.RED));
-                tris.add(new Triangle(new Vertex(-100, 100, -100),
-                                    new Vertex(100, -100, -100),
-                                    new Vertex(100, 100, 100),
-                                    Color.GREEN));
-                tris.add(new Triangle(new Vertex(-100, 100, -100),
-                                    new Vertex(100, -100, -100),
-                                    new Vertex(-100, -100, 100),
-                                    Color.BLUE));
+                List<Square> tris = new ArrayList<>();
+
+                List<Vertex[]> Square_coords = new ArrayList<>(); 
+
+
+// Adding coordinates to Square_coords
+                Square_coords.add(new Vertex[]{new Vertex(100, 100, 100), // window wall
+                                                new Vertex(100, 100, -100),
+                                                new Vertex(100, -100, -100),
+                                                new Vertex(100, -100, 100)});
+
+                Square_coords.add(new Vertex[]{new Vertex(-100, 100, 100), // door wall
+                                                new Vertex(-100, 100, -100),
+                                                new Vertex(-100, -100, -100),
+                                                new Vertex(-100, -100, 100)});
+
+                Square_coords.add(new Vertex[]{new Vertex(100, 100, 100), // bathroom wall
+                                                new Vertex(100, -100, 100),
+                                                new Vertex(-100, -100, 100),
+                                                new Vertex(-100, 100, 100)});
+
+                Square_coords.add(new Vertex[]{new Vertex(100, 100, -100), // opposite to bathroom
+                                                new Vertex(100, -100, -100),
+                                                new Vertex(-100, -100, -100),
+                                                new Vertex(-100, 100, -100)});
+
+                Square_coords.add(new Vertex[]{new Vertex(100, 100, 100), // top
+                                                new Vertex(100, 100, -100),
+                                                new Vertex(-100, 100, -100),
+                                                new Vertex(-100, 100, 100)});
+
+                Square_coords.add(new Vertex[]{new Vertex(100, -100, 100), // bottom
+                                                new Vertex(100, -100, -100),
+                                                new Vertex(-100, -100, -100),
+                                                new Vertex(-100, -100, 100)});
+
+
+                for(Vertex[] coords : Square_coords){
+                    tris.add(new Square(coords, Color.RED));
+                }
+
+
+
+
 
                 double heading = Math.toRadians(xzSlider.getValue()) * 5;
-                Matrix3 transform = new Matrix3(new double[] {
-                        Math.cos(heading), 0, -Math.sin(heading),
+                Matrix3 headingTransform = new Matrix3(new double[] {
+                        Math.cos(heading), 0, Math.sin(heading),
                         0, 1, 0,
-                        Math.sin(heading), 0, Math.cos(heading)
+                        -Math.sin(heading), 0, Math.cos(heading)
                     });
+                double pitch = Math.toRadians(xySlider.getValue()) * 5;
+                Matrix3 pitchTransform = new Matrix3(new double[] {
+                        1, 0, 0,
+                        0, Math.cos(pitch), Math.sin(pitch),
+                        0, -Math.sin(pitch), Math.cos(pitch)
+                    });
+                Matrix3 transform = headingTransform.multiply(pitchTransform);
 
                 g2.translate(getWidth() / 2, getHeight() / 2);
                 g2.setColor(Color.WHITE);
-                for (Triangle t : tris) {
-                    Vertex v1 = transform.transform(t.v1);
-                    Vertex v2 = transform.transform(t.v2);
-                    Vertex v3 = transform.transform(t.v3);
+                for (Square t : tris) {
+
+
+                    for(int i = 0; i < 4; i++){
+                        t.vertex_array[i] = transform.transform(t.vertex_array[i]);
+                    }
+
+
                     Path2D path = new Path2D.Double();
-                    path.moveTo(v1.x, v1.y);
-                    path.lineTo(v2.x, v2.y);
-                    path.lineTo(v3.x, v3.y);
+                    Vertex prevVertex = t.vertex_array[0];
+                    for(Vertex v : t.vertex_array){ 
+                        path.moveTo(prevVertex.x, prevVertex.y);
+                        path.lineTo(v.x, v.y);
+                        prevVertex = v;
+                    }
+                    path.moveTo(prevVertex.x, prevVertex.y);
+                    path.lineTo(t.vertex_array[0].x, t.vertex_array[0].y);
+
                     path.closePath();
                     g2.draw(path);
                 }
@@ -161,28 +199,15 @@ public class GUI implements ActionListener, ChangeListener {
 
         xySlider.addChangeListener(e -> renderPanel.repaint());
         xzSlider.addChangeListener(e -> renderPanel.repaint());
-        // Create a panel to hold both sliders inside renderPanel
-        // sliderPanel = new JPanel(new BorderLayout());
-        // sliderPanel.setOpaque(false);  // Make it blend with renderPanel
-
-        // Add sliders inside the sliderPanel
-        // sliderPanel.add(xzSlider, BorderLayout.SOUTH);
-        // sliderPanel.add(xySlider, BorderLayout.WEST);
-
-        // Add sliderPanel inside renderPanel
         renderPanel.setLayout(new BorderLayout());
-        // renderPanel.add(sliderPanel, BorderLayout.CENTER);
         frame.addComponentListener(new ComponentAdapter() {
             public void componentResized(ComponentEvent e) {
                 xzSlider.setPreferredSize(new Dimension(renderPanel.getWidth(), 30));
                 xySlider.setPreferredSize(new Dimension(30, renderPanel.getHeight()));
-        
                 renderPanel.revalidate();
             }
         });
         
-
-
         // Panel for buttons (RIGHT SIDE)
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridLayout(3, 1, 20, 20)); // 3 buttons stacked vertically
@@ -192,15 +217,6 @@ public class GUI implements ActionListener, ChangeListener {
         buttonPanel.add(ExitButton);
         buttonPanel.setBackground(Color.GRAY);
 
-        // Ensure button panel matches the render panel height
-        // frame.addComponentListener(new ComponentAdapter() {
-        //     public void componentResized(ComponentEvent e) {
-        //         // buttonPanel.setPreferredSize(new Dimension(400, renderPanel.getHeight()));
-        //         buttonPanel.revalidate();
-        //     }
-        // });
-        
-        
         // Panel for labels (TOP)
         JPanel topPanel = new JPanel(new GridLayout(2, 1));
         topPanel.add(label);
@@ -212,67 +228,29 @@ public class GUI implements ActionListener, ChangeListener {
         southPanel.setOpaque(false);
         southPanel.setBackground(Color.GRAY);
 
-        
-        
-        //blank panel below button
-
         JPanel blankPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         blankPanel.setOpaque(true);
         blankPanel.setBackground(Color.GRAY);
-
         blankPanel.setPreferredSize(new Dimension(screenSize.width/6 + 40, 30));
        
-        // southPanel.add(blankPanel, BorderLayout.EAST);
-
-
-        // Create bottom-left panel for the small button
         JPanel AutoRotatePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        AutoRotatePanel.setOpaque(true); // Ensure background color is visible
+        AutoRotatePanel.setOpaque(true);
         AutoRotatePanel.setBackground(Color.GRAY);  
-        
-        // Add the XZ slider inside the southPanel
-        // southPanel.add(xzSlider, BorderLayout.CENTER);
-        // southPanel.add(AutoRotatePanel, BorderLayout.WEST);
-
-
         AutoRotatePanel.add(AutoRotateButton);
-
-
         blankPanel.add(AutoRotatePanel, BorderLayout.EAST);
-        // Add AutoRotatePanel to the southPanel
-        // southPanel.add(AutoRotatePanel, BorderLayout.WEST);
 
-        // Modify sliderPanel to hold the updated southPanel
-        // sliderPanel.setLayout(new BorderLayout());
-        // sliderPanel.add(xySlider, BorderLayout.WEST);
-         // Keeps both the slider & button
-        // southPanel.add(blankPanel, BorderLayout.EAST);
-
-
-        // Add Components to Frame
-        frame.add(topPanel, BorderLayout.NORTH);
-
-        
-        frame.add(renderPanel, BorderLayout.CENTER);
-        frame.add(buttonPanel, BorderLayout.EAST); // Move buttons to the RIGHT side
-        
         southPanel.add(blankPanel, BorderLayout.EAST);
         southPanel.add(AutoRotatePanel, BorderLayout.WEST);
-        
         frame.add(southPanel, BorderLayout.SOUTH);
-        
-
         southPanel.add(xzSlider, BorderLayout.CENTER);
-
-        // frame.add(xzSlider, BorderLayout.SOUTH); /// 
-        // xzPanel.add(blankPanel, BorderLayout.EAST);
         frame.add(xySlider, BorderLayout.WEST);  // Keep XY slider on left
-        // frame.add(xzPanel, BorderLayout.SOUTH);
 
-        // xzPanel.add(southPanel, BorderLayout.CENTER);
-        // sliderPanel.add(southPanel, BorderLayout.SOUTH);
-
-        // frame.add(southPanel, BorderLayout.SOUTH);
+        frame.add(topPanel, BorderLayout.NORTH);
+        frame.add(renderPanel, BorderLayout.CENTER);
+        frame.add(buttonPanel, BorderLayout.EAST); // Buttons on the RIGHT side
+        
+        // Add key bindings for arrow keys and WASD
+        addKeyBindings();
 
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
@@ -280,13 +258,64 @@ public class GUI implements ActionListener, ChangeListener {
             public void componentResized(ComponentEvent e) {
                 xzSlider.setPreferredSize(new Dimension(renderPanel.getWidth(), 30));
                 xySlider.setPreferredSize(new Dimension(30, renderPanel.getHeight()));
-        
                 xzPanel.revalidate();
                 xyPanel.revalidate();
             }
         });
+    }
+
+   
+    private final Set<Integer> pressedKeys = new HashSet<>();
+    private Timer movementTimer;
+
+    private void addKeyBindings() {
+        JRootPane rootPane = frame.getRootPane();
+        InputMap im = rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = rootPane.getActionMap();
+
+        // Disable focus so sliders don't capture arrow keys
+        xzSlider.setFocusable(false);
+        xySlider.setFocusable(false);
+
+        // Key Press Actions
+        int[] keys = {KeyEvent.VK_LEFT, KeyEvent.VK_A, KeyEvent.VK_RIGHT, KeyEvent.VK_D,
+                    KeyEvent.VK_UP, KeyEvent.VK_W, KeyEvent.VK_DOWN, KeyEvent.VK_S};
         
-        
+        for (int key : keys) {
+            im.put(KeyStroke.getKeyStroke(key, 0, false), "pressed-" + key);
+            am.put("pressed-" + key, new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    pressedKeys.add(key);
+                }
+            });
+
+            im.put(KeyStroke.getKeyStroke(key, 0, true), "released-" + key);
+            am.put("released-" + key, new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    pressedKeys.remove(key);
+                }
+            });
+        }
+
+        // Timer to update sliders based on pressed keys
+        movementTimer = new Timer(30, e -> {
+            if (pressedKeys.contains(KeyEvent.VK_LEFT) || pressedKeys.contains(KeyEvent.VK_A)) {
+                xzSlider.setValue(xzSlider.getValue() - 1);
+            }
+            if (pressedKeys.contains(KeyEvent.VK_RIGHT) || pressedKeys.contains(KeyEvent.VK_D)) {
+                xzSlider.setValue(xzSlider.getValue() + 1);
+            }
+            if (pressedKeys.contains(KeyEvent.VK_UP) || pressedKeys.contains(KeyEvent.VK_W)) {
+                xySlider.setValue(xySlider.getValue() + 1);
+            }
+            if (pressedKeys.contains(KeyEvent.VK_DOWN) || pressedKeys.contains(KeyEvent.VK_S)) {
+                xySlider.setValue(xySlider.getValue() - 1);
+            }
+        });
+
+        movementTimer.start();
     }
 
     // Handle button clicks
@@ -316,16 +345,9 @@ public class GUI implements ActionListener, ChangeListener {
     }
 
     public static void main(String[] args) {
-
-        // JFrame frame = new JFrame("Debug Window");
-        // frame.setSize(300, 200);
-        // frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        // frame.add(new JLabel("If you can see this, the app is running!"));
-        // frame.setVisible(true);
         new GUI();
     }
 }
-
 
 class Vertex {
     double x;
@@ -350,6 +372,19 @@ class Triangle {
         this.color = color;
     }
 }
+
+class Square {
+    public Vertex vertex_array[] = new Vertex[4];
+    Color color;
+    Square(Vertex inp[], Color color) {
+        this.vertex_array = inp;
+        this.color = color;
+    }
+}
+
+
+
+
 
 class Matrix3 {
     double[] values;
