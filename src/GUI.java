@@ -27,6 +27,7 @@ public class GUI implements ActionListener, ChangeListener {
     private double totalRotationAngleXY = 0.0;
     private static final double AUTO_ROTATION_SPEED = 1.0; 
     private boolean isAutoRotating = false; // Flag to block slider feedback
+    private boolean ToggleAutoRotate = false;
 
     public GUI() {
         frame = new JFrame("Main Application");
@@ -53,6 +54,7 @@ public class GUI implements ActionListener, ChangeListener {
         ClickButton.addActionListener(this);
         ResetButton.addActionListener(this);
         ExitButton.addActionListener(this);
+        AutoRotateButton.addActionListener(this);
 
         ClickButton.setBackground(Color.LIGHT_GRAY);
         ResetButton.setBackground(Color.LIGHT_GRAY);
@@ -121,8 +123,6 @@ public class GUI implements ActionListener, ChangeListener {
                 g2.fillRect(0, 0, getWidth(), getHeight());
                 
                 // Rendering magic will happen here
-                List<Polygon> sqare_list = new ArrayList<>();
-
                 List<Polygon> polygon_list = new ArrayList<>();
 
                 List<Vertex[]> Shape_Coords = new ArrayList<>(); 
@@ -138,11 +138,6 @@ public class GUI implements ActionListener, ChangeListener {
 
                 for(Vertex[] coords : Shape_Coords){
                     polygon_list.add(new Polygon(coords, Color.RED));
-                }
-
-
-                for(Vertex[] coords : Shape_Coords){
-                    sqare_list.add(new Polygon(coords, Color.RED));
                 }
 
 
@@ -213,7 +208,8 @@ public class GUI implements ActionListener, ChangeListener {
         // Panel for labels (TOP)
         JPanel topPanel = new JPanel(new GridLayout(2, 1));
         topPanel.add(label);
-        topPanel.add(xzLabel);
+        // topPanel.add(xzLabel);
+        // topPanel.add(xyLabel);
         topPanel.setBackground(Color.GRAY);
         
         // Create a new panel to hold both XZ slider and small button
@@ -256,20 +252,20 @@ public class GUI implements ActionListener, ChangeListener {
             }
         });
 
-        autoRotateTimer = new Timer(30, e -> {
-            isAutoRotating = true; // Block stateChanged updates during auto-rotation
-            
-            // Increment angles continuously
-            totalRotationAngleXZ += AUTO_ROTATION_SPEED;
-            totalRotationAngleXY += AUTO_ROTATION_SPEED;
-            
-            // Map angles to slider range (-50 to 50) using modulo
-            xzSlider.setValue((int) ((totalRotationAngleXZ / 5) % 100 - 50));
-            xySlider.setValue((int) ((totalRotationAngleXY / 5) % 100 - 50));
-            
-            isAutoRotating = false;
-            renderPanel.repaint();
-        });
+            autoRotateTimer = new Timer(30, e -> {
+                isAutoRotating = true; // Block stateChanged updates during auto-rotation
+                
+                // Increment angles continuously
+                totalRotationAngleXZ += AUTO_ROTATION_SPEED;
+                totalRotationAngleXY += AUTO_ROTATION_SPEED;
+                
+                // Map angles to slider range (-50 to 50) using modulo
+                xzSlider.setValue((int) ((totalRotationAngleXZ / 5) % 100 - 50));
+                xySlider.setValue((int) ((totalRotationAngleXY / 5) % 100 - 50));
+                
+                isAutoRotating = false;
+                renderPanel.repaint();
+            });
 
         idleCheckTimer = new Timer(500, e -> {
             if (System.currentTimeMillis() - lastUserInputTime > IDLE_TIMEOUT) {
@@ -385,6 +381,22 @@ public class GUI implements ActionListener, ChangeListener {
 
     // Handle button clicks
     public void actionPerformed(ActionEvent e) {
+        if(e.getSource() == AutoRotateButton){
+            if(ToggleAutoRotate){
+                // If auto-rotation is active, stop it:
+                ToggleAutoRotate = false;
+                autoRotateTimer.stop();
+                // Optionally update UI (e.g., change button background)
+                AutoRotateButton.setBackground(Color.LIGHT_GRAY);
+            }
+            else{
+                // If auto-rotation is off, start it:
+                ToggleAutoRotate = true;
+                autoRotateTimer.start();
+                // Optionally update UI (e.g., change button background)
+                AutoRotateButton.setBackground(Color.GREEN);
+            }
+        }
         if (e.getSource() == ExitButton) {
             System.exit(0);
         }
@@ -392,7 +404,7 @@ public class GUI implements ActionListener, ChangeListener {
             clicks++;
         }
         if (e.getSource() == ResetButton) {
-            clicks = 0;
+            // clicks = 0;
             xzSlider.setValue(0);
             xySlider.setValue(0);
         }
@@ -434,7 +446,7 @@ class Vertex {
 
 
 class Polygon {
-    int number_of_sides = 3;
+    int number_of_sides = 3; //Defaut Triangle
 
     public List<Vertex> vertex_array = new ArrayList<>();
 
