@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -18,6 +17,16 @@ public class GUI implements ActionListener, ChangeListener {
     private JLabel xzLabel, xyLabel;
     private JSlider xzSlider, xySlider;
     private JPanel renderPanel, xzPanel, xyPanel, sliderPanel;
+
+    private Timer autoRotateTimer;
+    private Timer idleCheckTimer;
+    private long lastUserInputTime;
+    private static final long IDLE_TIMEOUT = 500;
+
+    private double totalRotationAngleXZ = 0.0;
+    private double totalRotationAngleXY = 0.0;
+    private static final double AUTO_ROTATION_SPEED = 1.0; 
+    private boolean isAutoRotating = false; // Flag to block slider feedback
 
     public GUI() {
         frame = new JFrame("Main Application");
@@ -154,23 +163,22 @@ public class GUI implements ActionListener, ChangeListener {
                 }
 
 
+                double heading = Math.toRadians(totalRotationAngleXZ); // Use tracked angle
+                double pitch = Math.toRadians(totalRotationAngleXY);    // Use tracked angle
 
-
-
-                double heading = Math.toRadians(xzSlider.getValue()) * 5;
                 Matrix3 headingTransform = new Matrix3(new double[] {
-                        Math.cos(heading), 0, Math.sin(heading),
-                        0, 1, 0,
-                        -Math.sin(heading), 0, Math.cos(heading)
-                    });
-                double pitch = Math.toRadians(xySlider.getValue()) * 5;
-                Matrix3 pitchTransform = new Matrix3(new double[] {
-                        1, 0, 0,
-                        0, Math.cos(pitch), Math.sin(pitch),
-                        0, -Math.sin(pitch), Math.cos(pitch)
-                    });
-                Matrix3 transform = headingTransform.multiply(pitchTransform);
+                    Math.cos(heading), 0, Math.sin(heading),
+                    0, 1, 0,
+                    -Math.sin(heading), 0, Math.cos(heading)
+                });
 
+                Matrix3 pitchTransform = new Matrix3(new double[] {
+                    1, 0, 0,
+                    0, Math.cos(pitch), Math.sin(pitch),
+                    0, -Math.sin(pitch), Math.cos(pitch)
+                });
+
+                Matrix3 transform = headingTransform.multiply(pitchTransform);
                 g2.translate(getWidth() / 2, getHeight() / 2);
                 g2.setColor(Color.WHITE);
                 for (Square t : tris) {
@@ -262,6 +270,77 @@ public class GUI implements ActionListener, ChangeListener {
                 xyPanel.revalidate();
             }
         });
+
+        autoRotateTimer = new Timer(30, e -> {
+            isAutoRotating = true; // Block stateChanged updates during auto-rotation
+            
+            // Increment angles continuously
+            totalRotationAngleXZ += AUTO_ROTATION_SPEED;
+            totalRotationAngleXY += AUTO_ROTATION_SPEED;
+            
+            // Map angles to slider range (-50 to 50) using modulo
+            xzSlider.setValue((int) ((totalRotationAngleXZ / 5) % 100 - 50));
+            xySlider.setValue((int) ((totalRotationAngleXY / 5) % 100 - 50));
+            
+            isAutoRotating = false;
+            renderPanel.repaint();
+        });
+
+        idleCheckTimer = new Timer(500, e -> {
+            if (System.currentTimeMillis() - lastUserInputTime > IDLE_TIMEOUT) {
+                if (!autoRotateTimer.isRunning()) {
+                    autoRotateTimer.start();
+                }
+            }
+        });
+
+        autoRotateTimer.setInitialDelay(0);
+        idleCheckTimer.setInitialDelay(0);
+        idleCheckTimer.start();
+        lastUserInputTime = System.currentTimeMillis();
+
+        // Add mouse listeners to sliders for user input detection
+        xzSlider.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                onUserInput();
+            }
+        });
+
+        xySlider.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                onUserInput();
+            }
+        });
+
+        // Add onUserInput to mouse wheel listeners
+        xzSlider.addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                onUserInput();
+                int value = xzSlider.getValue();
+                int notches = e.getWheelRotation();
+                xzSlider.setValue(value - (notches * 2));
+            }
+        });
+
+        xySlider.addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                onUserInput();
+                int value = xySlider.getValue();
+                int notches = e.getWheelRotation();
+                xySlider.setValue(value - (notches * 2));
+            }
+        });
+    }
+
+    private void onUserInput() {
+        lastUserInputTime = System.currentTimeMillis();
+        if (autoRotateTimer.isRunning()) {
+            autoRotateTimer.stop();
+        }
     }
 
    
@@ -287,6 +366,7 @@ public class GUI implements ActionListener, ChangeListener {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     pressedKeys.add(key);
+                    onUserInput();
                 }
             });
 
@@ -336,17 +416,23 @@ public class GUI implements ActionListener, ChangeListener {
 
     // Handle slider movement
     public void stateChanged(ChangeEvent e) {
+        if (isAutoRotating) return; // Ignore auto-rotation updates
+        
         if (e.getSource() == xzSlider) {
+            // Directly set angle based on slider position
+            totalRotationAngleXZ = xzSlider.getValue() * 5.0;
             xzLabel.setText("XZ Position: " + xzSlider.getValue());
+            onUserInput(); // Stop auto-rotation
         }
         if (e.getSource() == xySlider) {
+            totalRotationAngleXY = xySlider.getValue() * 5.0;
             xyLabel.setText("XY Position: " + xySlider.getValue());
+            onUserInput(); // Stop auto-rotation
         }
-    }
-
+    }    
     public static void main(String[] args) {
-        new GUI();
-    }
+            new GUI();
+        }
 }
 
 class Vertex {
