@@ -45,10 +45,10 @@ public class GUI implements ActionListener, ChangeListener {
         frame.getContentPane().setBackground(Color.BLACK);
 
         // Click, Reset, and Exit Buttons
-        ClickButton = new JButton("Toggle Shape");
-        ResetButton = new JButton("Reset"); 
-        ExitButton = new JButton("Exit Application");
-        ToggleWireframeButton = new JButton("Toggle WireFrame");
+        ClickButton = new JButton("Toggle Shape (F)");
+        ResetButton = new JButton("Reset (R)"); 
+        ExitButton = new JButton("Exit Application (Esc)");
+        ToggleWireframeButton = new JButton("Toggle WireFrame (Q)");
         AutoRotateButton = new JButton("");
         Dimension buttonSize = new Dimension(screenSize.width/6, screenSize.width/50);
         ClickButton.setPreferredSize(buttonSize);
@@ -95,6 +95,54 @@ public class GUI implements ActionListener, ChangeListener {
         // Add listeners
         xzSlider.addChangeListener(this);
         xySlider.addChangeListener(this);
+
+        //Keyboard Bindings
+        InputMap inputMap = frame.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = frame.getRootPane().getActionMap();
+        frame.setFocusable(true);
+        frame.requestFocusInWindow();
+        
+        
+        inputMap.put(KeyStroke.getKeyStroke("F"), "toggleShape");
+        inputMap.put(KeyStroke.getKeyStroke("R"), "reset");
+        inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), "exitApp");
+        inputMap.put(KeyStroke.getKeyStroke("Q"), "toggleWireframe");
+        inputMap.put(KeyStroke.getKeyStroke("SPACE"), "toggleAutoRotate");
+        
+        actionMap.put("toggleShape", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ClickButton.doClick();
+            }
+        });
+        
+        actionMap.put("reset", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ResetButton.doClick();
+            }
+        });
+        
+        actionMap.put("exitApp", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ExitButton.doClick();
+            }
+        });
+        
+        actionMap.put("toggleWireframe", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ToggleWireframeButton.doClick();
+            }
+        });
+        
+        actionMap.put("toggleAutoRotate", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                AutoRotateButton.doClick();
+            }
+        });
 
         // Add mouse wheel listener for XZ slider
         xzSlider.addMouseWheelListener(new MouseWheelListener() {
