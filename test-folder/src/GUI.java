@@ -28,6 +28,8 @@ public class GUI implements ActionListener, ChangeListener {
     private static final double AUTO_ROTATION_SPEED = 1.0; 
     private boolean isAutoRotating = false; // Flag to block slider feedback
 
+    private boolean autoRotationEnabled = true;
+
     public GUI() {
         frame = new JFrame("Main Application");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -40,10 +42,10 @@ public class GUI implements ActionListener, ChangeListener {
         frame.getContentPane().setBackground(Color.BLACK);
 
         // Click, Reset, and Exit Buttons
-        ClickButton = new JButton("Click Me");
+        ClickButton = new JButton("Toggle Shape");
         ResetButton = new JButton("Reset"); 
         ExitButton = new JButton("Exit Application");
-        AutoRotateButton = new JButton("↺");
+        AutoRotateButton = new JButton("");
         Dimension buttonSize = new Dimension(screenSize.width/6, screenSize.width/50);
         ClickButton.setPreferredSize(buttonSize);
         ResetButton.setPreferredSize(buttonSize);
@@ -56,8 +58,11 @@ public class GUI implements ActionListener, ChangeListener {
 
         ClickButton.setBackground(Color.LIGHT_GRAY);
         ResetButton.setBackground(Color.LIGHT_GRAY);
-        AutoRotateButton.setBackground(Color.LIGHT_GRAY);
+        AutoRotateButton.setBackground(Color.GREEN);
         ExitButton.setBackground(Color.RED);
+
+        AutoRotateButton.addActionListener(this);
+        // AutoRotateButton.setText("↺");
 
         // Sliders for XZ and XY movement
         xzSlider = new JSlider(JSlider.HORIZONTAL, -50, 50, 0);
@@ -121,23 +126,21 @@ public class GUI implements ActionListener, ChangeListener {
                 g2.fillRect(0, 0, getWidth(), getHeight());
                 
                 // Rendering magic will happen here
-                List<Polygon> sqare_list = new ArrayList<>();
-
                 List<Polygon> polygon_list = new ArrayList<>();
 
                 List<Vertex[]> Shape_Coords = new ArrayList<>(); 
 
                 
             // Adding coordinates to Shape_Coords
-                Shape_Coords = CoordinateCreator.create_square_coords(200);
+                if(clicks % 2 == 0){
+                    Shape_Coords = CoordinateCreator.create_triangle_coords(200);
+                }
+                else{
+                    Shape_Coords = CoordinateCreator.create_square_coords(200);
+                }
 
                 for(Vertex[] coords : Shape_Coords){
                     polygon_list.add(new Polygon(coords, Color.RED));
-                }
-
-
-                for(Vertex[] coords : Shape_Coords){
-                    sqare_list.add(new Polygon(coords, Color.RED));
                 }
 
 
@@ -160,24 +163,24 @@ public class GUI implements ActionListener, ChangeListener {
                 g2.translate(getWidth() / 2, getHeight() / 2);
                 g2.setColor(Color.WHITE);
                 
-                for (Polygon t : polygon_list) {
+                for (Polygon poly : polygon_list) {
 
 
-                    for(int i = 0; i < t.number_of_sides; i++){
+                    for(int i = 0; i < poly.number_of_sides; i++){
 
-                        t.vertex_array.set(i, transform.transform(t.vertex_array.get(i)) );
+                        poly.vertex_array.set(i, transform.transform(poly.vertex_array.get(i)) );
                     }
 
 
                     Path2D path = new Path2D.Double();
-                    Vertex prevVertex = t.vertex_array.get(0);
-                    for(Vertex v : t.vertex_array){ 
+                    Vertex prevVertex = poly.vertex_array.get(0);
+                    for(Vertex v : poly.vertex_array){ 
                         path.moveTo(prevVertex.x, prevVertex.y);
                         path.lineTo(v.x, v.y);
                         prevVertex = v;
                     }
                     path.moveTo(prevVertex.x, prevVertex.y);
-                    path.lineTo(t.vertex_array.get(0).x, t.vertex_array.get(0).y);
+                    path.lineTo(poly.vertex_array.get(0).x, poly.vertex_array.get(0).y);
 
                     path.closePath();
                     g2.draw(path);
@@ -208,7 +211,8 @@ public class GUI implements ActionListener, ChangeListener {
         // Panel for labels (TOP)
         JPanel topPanel = new JPanel(new GridLayout(2, 1));
         topPanel.add(label);
-        topPanel.add(xzLabel);
+        // topPanel.add(xzLabel);
+        // topPanel.add(xyLabel);
         topPanel.setBackground(Color.GRAY);
         
         // Create a new panel to hold both XZ slider and small button
@@ -251,24 +255,25 @@ public class GUI implements ActionListener, ChangeListener {
             }
         });
 
-        autoRotateTimer = new Timer(30, e -> {
-            isAutoRotating = true; // Block stateChanged updates during auto-rotation
-            
-            // Increment angles continuously
-            totalRotationAngleXZ += AUTO_ROTATION_SPEED;
-            totalRotationAngleXY += AUTO_ROTATION_SPEED;
-            
-            // Map angles to slider range (-50 to 50) using modulo
-            xzSlider.setValue((int) ((totalRotationAngleXZ / 5) % 100 - 50));
-            xySlider.setValue((int) ((totalRotationAngleXY / 5) % 100 - 50));
-            
-            isAutoRotating = false;
-            renderPanel.repaint();
-        });
+            autoRotateTimer = new Timer(30, e -> {
+                renderPanel.repaint();
+                isAutoRotating = true; // Block stateChanged updates during auto-rotation
+                
+                // Increment angles continuously
+                totalRotationAngleXZ += AUTO_ROTATION_SPEED;
+                totalRotationAngleXY += AUTO_ROTATION_SPEED;
+                
+                // Map angles to slider range (-50 to 50) using modulo
+                xzSlider.setValue((int) ((totalRotationAngleXZ / 5) % 100 - 50));
+                xySlider.setValue((int) ((totalRotationAngleXY / 5) % 100 - 50));
+                
+                isAutoRotating = false;
+                renderPanel.repaint();
+            });
 
         idleCheckTimer = new Timer(500, e -> {
             if (System.currentTimeMillis() - lastUserInputTime > IDLE_TIMEOUT) {
-                if (!autoRotateTimer.isRunning()) {
+                if (autoRotationEnabled && !autoRotateTimer.isRunning()) {
                     autoRotateTimer.start();
                 }
             }
@@ -382,14 +387,31 @@ public class GUI implements ActionListener, ChangeListener {
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == ExitButton) {
             System.exit(0);
-        }
+        } 
         if (e.getSource() == ClickButton) {
+            renderPanel.repaint();
             clicks++;
-        }
+        } 
         if (e.getSource() == ResetButton) {
             clicks = 0;
             xzSlider.setValue(0);
             xySlider.setValue(0);
+        } 
+        if (e.getSource() == AutoRotateButton) {
+            // Toggle auto-rotation state
+            autoRotationEnabled = !autoRotationEnabled;
+            // AutoRotateButton.setText(autoRotationEnabled ? "↺" : "▶");
+            if (!autoRotationEnabled) {
+                AutoRotateButton.setBackground(Color.RED);
+                // Stop auto-rotation immediately when disabled
+                autoRotateTimer.stop();
+            } else {
+                AutoRotateButton.setBackground(Color.GREEN);
+                // If enabled and idle, start auto-rotation
+                if (System.currentTimeMillis() - lastUserInputTime > IDLE_TIMEOUT) {
+                    autoRotateTimer.start();
+                }
+            }
         }
         label.setText("Number of clicks:  " + clicks);
     }
@@ -429,7 +451,7 @@ class Vertex {
 
 
 class Polygon {
-    int number_of_sides = 3;
+    int number_of_sides = 3; //Defaut Triangle
 
     public List<Vertex> vertex_array = new ArrayList<>();
 

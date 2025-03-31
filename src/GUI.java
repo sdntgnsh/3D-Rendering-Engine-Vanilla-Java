@@ -256,6 +256,7 @@ public class GUI implements ActionListener, ChangeListener {
         });
 
             autoRotateTimer = new Timer(30, e -> {
+                renderPanel.repaint();
                 isAutoRotating = true; // Block stateChanged updates during auto-rotation
                 
                 // Increment angles continuously
@@ -388,6 +389,7 @@ public class GUI implements ActionListener, ChangeListener {
             System.exit(0);
         } 
         if (e.getSource() == ClickButton) {
+            renderPanel.repaint();
             clicks++;
         } 
         if (e.getSource() == ResetButton) {
