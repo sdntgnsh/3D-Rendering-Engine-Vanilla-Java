@@ -397,9 +397,11 @@ public class GUI implements ActionListener, ChangeListener {
             autoRotationEnabled = !autoRotationEnabled;
             AutoRotateButton.setText(autoRotationEnabled ? "↺" : "▶");
             if (!autoRotationEnabled) {
+                AutoRotateButton.setBackground(Color.RED);
                 // Stop auto-rotation immediately when disabled
                 autoRotateTimer.stop();
             } else {
+                AutoRotateButton.setBackground(Color.GREEN);
                 // If enabled and idle, start auto-rotation
                 if (System.currentTimeMillis() - lastUserInputTime > IDLE_TIMEOUT) {
                     autoRotateTimer.start();
