@@ -112,50 +112,24 @@ public class GUI implements ActionListener, ChangeListener {
                 g2.fillRect(0, 0, getWidth(), getHeight());
                 
                 // Rendering magic will happen here
-                List<Square> tris = new ArrayList<>();
+                List<Square> sqare_list = new ArrayList<>();
 
-                List<Vertex[]> Square_coords = new ArrayList<>(); 
+                List<Polygon> triangle_list = new ArrayList<>();
 
+                List<Vertex[]> Shape_Coords = new ArrayList<>(); 
 
-// Adding coordinates to Square_coords
-                Square_coords.add(new Vertex[]{new Vertex(100, 100, 100), // window wall
-                                                new Vertex(100, 100, -100),
-                                                new Vertex(100, -100, -100),
-                                                new Vertex(100, -100, 100)});
+                
+            // Adding coordinates to Shape_Coords
+                Shape_Coords = CoordinateCreator.create_triangle_coords(200);
 
-                Square_coords.add(new Vertex[]{new Vertex(-100, 100, 100), // door wall
-                                                new Vertex(-100, 100, -100),
-                                                new Vertex(-100, -100, -100),
-                                                new Vertex(-100, -100, 100)});
-
-                Square_coords.add(new Vertex[]{new Vertex(100, 100, 100), // bathroom wall
-                                                new Vertex(100, -100, 100),
-                                                new Vertex(-100, -100, 100),
-                                                new Vertex(-100, 100, 100)});
-
-                Square_coords.add(new Vertex[]{new Vertex(100, 100, -100), // opposite to bathroom
-                                                new Vertex(100, -100, -100),
-                                                new Vertex(-100, -100, -100),
-                                                new Vertex(-100, 100, -100)});
-
-                Square_coords.add(new Vertex[]{new Vertex(100, 100, 100), // top
-                                                new Vertex(100, 100, -100),
-                                                new Vertex(-100, 100, -100),
-                                                new Vertex(-100, 100, 100)});
-
-                Square_coords.add(new Vertex[]{new Vertex(100, -100, 100), // bottom
-                                                new Vertex(100, -100, -100),
-                                                new Vertex(-100, -100, -100),
-                                                new Vertex(-100, -100, 100)});
-
-
-                for(Vertex[] coords : Square_coords){
-                    tris.add(new Square(coords, Color.RED));
+                for(Vertex[] coords : Shape_Coords){
+                    triangle_list.add(new Polygon(coords, Color.RED));
                 }
 
 
-
-
+                for(Vertex[] coords : Shape_Coords){
+                    sqare_list.add(new Square(coords, Color.RED));
+                }
 
                 double heading = Math.toRadians(xzSlider.getValue()) * 5;
                 Matrix3 headingTransform = new Matrix3(new double[] {
@@ -173,23 +147,25 @@ public class GUI implements ActionListener, ChangeListener {
 
                 g2.translate(getWidth() / 2, getHeight() / 2);
                 g2.setColor(Color.WHITE);
-                for (Square t : tris) {
+                
+                for (Polygon t : triangle_list) {
 
 
-                    for(int i = 0; i < 4; i++){
-                        t.vertex_array[i] = transform.transform(t.vertex_array[i]);
+                    for(int i = 0; i < t.number_of_sides; i++){
+
+                        t.vertex_array.set(i, transform.transform(t.vertex_array.get(i)) );
                     }
 
 
                     Path2D path = new Path2D.Double();
-                    Vertex prevVertex = t.vertex_array[0];
+                    Vertex prevVertex = t.vertex_array.get(0);
                     for(Vertex v : t.vertex_array){ 
                         path.moveTo(prevVertex.x, prevVertex.y);
                         path.lineTo(v.x, v.y);
                         prevVertex = v;
                     }
                     path.moveTo(prevVertex.x, prevVertex.y);
-                    path.lineTo(t.vertex_array[0].x, t.vertex_array[0].y);
+                    path.lineTo(t.vertex_array.get(0).x, t.vertex_array.get(0).y);
 
                     path.closePath();
                     g2.draw(path);
@@ -361,25 +337,104 @@ class Vertex {
 }
 
 class Triangle {
-    Vertex v1;
-    Vertex v2;
-    Vertex v3;
+    int number_of_sides = 3;
+    public Vertex vertex_array[] = new Vertex[number_of_sides];
     Color color;
-    Triangle(Vertex v1, Vertex v2, Vertex v3, Color color) {
-        this.v1 = v1;
-        this.v2 = v2;
-        this.v3 = v3;
+    Triangle(Vertex inp[], Color color) {
+        this.vertex_array = inp;
         this.color = color;
     }
 }
 
 class Square {
-    public Vertex vertex_array[] = new Vertex[4];
+    int number_of_sides = 4;
+    public Vertex vertex_array[] = new Vertex[number_of_sides];
     Color color;
     Square(Vertex inp[], Color color) {
         this.vertex_array = inp;
         this.color = color;
     }
+}
+
+class Polygon {
+    int number_of_sides = 3;
+
+    public List<Vertex> vertex_array = new ArrayList<>();
+
+    Color color;
+    Polygon(Vertex inp[], Color color) {
+        for(Vertex v : inp){
+            this.vertex_array.add(new Vertex(v.x, v.y, v.z));
+        }
+        number_of_sides = vertex_array.size();
+        this.color = color;
+    }
+}
+
+class CoordinateCreator {
+
+
+    static List<Vertex[]> create_square_coords(int size){
+        List<Vertex[]> Shape_Coords = new ArrayList<>(); 
+                // Adding coordinates to Shape_Coords
+                Shape_Coords.add(new Vertex[]{new Vertex(size, size, size), // window wall
+                                                new Vertex(size, size, -size),
+                                                new Vertex(size, -size, -size),
+                                                new Vertex(size, -size, size)});
+
+                Shape_Coords.add(new Vertex[]{new Vertex(-size, size, size), // door wall
+                                                new Vertex(-size, size, -size),
+                                                new Vertex(-size, -size, -size),
+                                                new Vertex(-size, -size, size)});
+
+                Shape_Coords.add(new Vertex[]{new Vertex(size, size, size), // bathroom wall
+                                                new Vertex(size, -size, size),
+                                                new Vertex(-size, -size, size),
+                                                new Vertex(-size, size, size)});
+
+                Shape_Coords.add(new Vertex[]{new Vertex(size, size, -size), // opposite to bathroom
+                                                new Vertex(size, -size, -size),
+                                                new Vertex(-size, -size, -size),
+                                                new Vertex(-size, size, -size)});
+
+                Shape_Coords.add(new Vertex[]{new Vertex(size, size, size), // top
+                                                new Vertex(size, size, -size),
+                                                new Vertex(-size, size, -size),
+                                                new Vertex(-size, size, size)});
+
+                Shape_Coords.add(new Vertex[]{new Vertex(size, -size, size), // bottom
+                                                new Vertex(size, -size, -size),
+                                                new Vertex(-size, -size, -size),
+                                                new Vertex(-size, -size, size)});
+
+
+                return Shape_Coords;
+
+        
+    }
+
+    static List<Vertex[]> create_triangle_coords(int size){
+
+        List<Vertex[]> Triangle_coords = new ArrayList<>();
+        // Adding coordinates to Triangle_coords
+        Triangle_coords.add(new Vertex[]{new Vertex(size, size, size),
+                                        new Vertex(-size, -size, size),
+                                        new Vertex(-size, size, -size)});
+
+        Triangle_coords.add(new Vertex[]{new Vertex(size, size, size),
+                                        new Vertex(-size, -size, size),
+                                        new Vertex(size, -size, -size)});
+
+        Triangle_coords.add(new Vertex[]{new Vertex(-size, size, -size),
+                                        new Vertex(size, -size, -size),
+                                        new Vertex(size, size, size)});
+
+        Triangle_coords.add(new Vertex[]{new Vertex(-size, size, -size),
+                                        new Vertex(size, -size, -size),
+                                        new Vertex(-size, -size, size)});
+        return Triangle_coords;
+    }
+
 }
 
 
