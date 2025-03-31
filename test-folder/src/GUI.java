@@ -1,19 +1,23 @@
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.*;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
 public class GUI implements ActionListener, ChangeListener {
     private int clicks = 0;
     private JLabel label = new JLabel("Number of clicks:  0");
+    private JLabel WireFramelabel = new JLabel("Toggle WireFrame:  0");
     private JFrame frame;
-    private JButton ClickButton, ResetButton, ExitButton, AutoRotateButton;
+    private JButton ClickButton, ResetButton, ExitButton, AutoRotateButton, ToggleWireframeButton;
     private JLabel xzLabel, xyLabel;
     private JSlider xzSlider, xySlider;
     private JPanel renderPanel, xzPanel, xyPanel, sliderPanel;
@@ -29,6 +33,7 @@ public class GUI implements ActionListener, ChangeListener {
     private boolean isAutoRotating = false; // Flag to block slider feedback
 
     private boolean autoRotationEnabled = true;
+    private boolean ToggleWireframe = true;
 
     public GUI() {
         frame = new JFrame("Main Application");
@@ -42,22 +47,26 @@ public class GUI implements ActionListener, ChangeListener {
         frame.getContentPane().setBackground(Color.BLACK);
 
         // Click, Reset, and Exit Buttons
-        ClickButton = new JButton("Toggle Shape");
-        ResetButton = new JButton("Reset"); 
-        ExitButton = new JButton("Exit Application");
+        ClickButton = new JButton("Toggle Shape (F)");
+        ResetButton = new JButton("Reset (R)"); 
+        ExitButton = new JButton("Exit Application (Esc)");
+        ToggleWireframeButton = new JButton("Toggle WireFrame (Q)");
         AutoRotateButton = new JButton("");
         Dimension buttonSize = new Dimension(screenSize.width/6, screenSize.width/50);
         ClickButton.setPreferredSize(buttonSize);
         ResetButton.setPreferredSize(buttonSize);
         ExitButton.setPreferredSize(buttonSize);
+        ToggleWireframeButton.setPreferredSize(buttonSize);
         AutoRotateButton.setPreferredSize(new Dimension(20, 20));
 
         ClickButton.addActionListener(this);
         ResetButton.addActionListener(this);
         ExitButton.addActionListener(this);
+        ToggleWireframeButton.addActionListener(this);
 
         ClickButton.setBackground(Color.LIGHT_GRAY);
         ResetButton.setBackground(Color.LIGHT_GRAY);
+        ToggleWireframeButton.setBackground(Color.LIGHT_GRAY);
         AutoRotateButton.setBackground(Color.GREEN);
         ExitButton.setBackground(Color.RED);
 
@@ -89,6 +98,54 @@ public class GUI implements ActionListener, ChangeListener {
         xzSlider.addChangeListener(this);
         xySlider.addChangeListener(this);
 
+        //Keyboard Bindings
+        InputMap inputMap = frame.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = frame.getRootPane().getActionMap();
+        frame.setFocusable(true);
+        frame.requestFocusInWindow();
+        
+        
+        inputMap.put(KeyStroke.getKeyStroke("F"), "toggleShape");
+        inputMap.put(KeyStroke.getKeyStroke("R"), "reset");
+        inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), "exitApp");
+        inputMap.put(KeyStroke.getKeyStroke("Q"), "toggleWireframe");
+        inputMap.put(KeyStroke.getKeyStroke("SPACE"), "toggleAutoRotate");
+        
+        actionMap.put("toggleShape", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ClickButton.doClick();
+            }
+        });
+        
+        actionMap.put("reset", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ResetButton.doClick();
+            }
+        });
+        
+        actionMap.put("exitApp", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ExitButton.doClick();
+            }
+        });
+        
+        actionMap.put("toggleWireframe", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ToggleWireframeButton.doClick();
+            }
+        });
+        
+        actionMap.put("toggleAutoRotate", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                AutoRotateButton.doClick();
+            }
+        });
+
         // Add mouse wheel listener for XZ slider
         xzSlider.addMouseWheelListener(new MouseWheelListener() {
             @Override
@@ -108,6 +165,7 @@ public class GUI implements ActionListener, ChangeListener {
                 xySlider.setValue(value - (notches * 2)); // Adjust sensitivity as needed
             }
         });
+  
         xzSlider.setBackground(Color.GRAY);
         xySlider.setBackground(Color.GRAY);
         xzSlider.setPreferredSize(new Dimension(400, 30)); 
@@ -133,14 +191,18 @@ public class GUI implements ActionListener, ChangeListener {
                 
             // Adding coordinates to Shape_Coords
                 if(clicks % 2 == 0){
-                    Shape_Coords = CoordinateCreator.create_triangle_coords(200);
+                    Shape_Coords = CoordinateCreator.create_triangle_coords(150);
                 }
                 else{
-                    Shape_Coords = CoordinateCreator.create_square_coords(200);
+                    Shape_Coords = CoordinateCreator.create_square_coords(150);
                 }
+                Color colorArr[] = {new Color(205, 180, 219), new Color(255, 200, 221), new Color(255, 175, 204), new Color(189, 224, 254), new Color(162, 210, 255), new Color(202, 240, 248)};
+                Color colorArr2[] = {new Color(255, 173, 173), new Color(255, 214, 165), new Color(253, 255, 182), new Color(202, 255, 191),new Color(155, 246, 255),new Color(160, 196, 255), new Color(189, 178, 255)};
 
+                int inx  = 0;
                 for(Vertex[] coords : Shape_Coords){
-                    polygon_list.add(new Polygon(coords, Color.RED));
+                    polygon_list.add(new Polygon(coords, colorArr2[inx % colorArr2.length]));
+                    inx++;
                 }
 
 
@@ -160,34 +222,130 @@ public class GUI implements ActionListener, ChangeListener {
                 });
 
                 Matrix3 transform = headingTransform.multiply(pitchTransform);
-                g2.translate(getWidth() / 2, getHeight() / 2);
-                g2.setColor(Color.WHITE);
-                
-                for (Polygon poly : polygon_list) {
+                if(ToggleWireframe){
+                    g2.translate(getWidth() / 2, getHeight() / 2);
+                    g2.setColor(Color.WHITE);
+                    
+                    for (Polygon poly : polygon_list) {
 
 
-                    for(int i = 0; i < poly.number_of_sides; i++){
+                        for(int i = 0; i < poly.number_of_sides; i++){
 
-                        poly.vertex_array.set(i, transform.transform(poly.vertex_array.get(i)) );
-                    }
+                            poly.vertex_array.set(i, transform.transform(poly.vertex_array.get(i)) );
+                        }
 
 
-                    Path2D path = new Path2D.Double();
-                    Vertex prevVertex = poly.vertex_array.get(0);
-                    for(Vertex v : poly.vertex_array){ 
+                        Path2D path = new Path2D.Double();
+                        Vertex prevVertex = poly.vertex_array.get(0);
+                        for(Vertex v : poly.vertex_array){ 
+                            path.moveTo(prevVertex.x, prevVertex.y);
+                            path.lineTo(v.x, v.y);
+                            prevVertex = v;
+                        }
                         path.moveTo(prevVertex.x, prevVertex.y);
-                        path.lineTo(v.x, v.y);
-                        prevVertex = v;
+                        path.lineTo(poly.vertex_array.get(0).x, poly.vertex_array.get(0).y);
+
+                        path.closePath();
+                        g2.draw(path);
                     }
-                    path.moveTo(prevVertex.x, prevVertex.y);
-                    path.lineTo(poly.vertex_array.get(0).x, poly.vertex_array.get(0).y);
-
-                    path.closePath();
-                    g2.draw(path);
                 }
-            }
-        };
+                else{
+                    BufferedImage img = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    int[] pixels = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
+                    Arrays.fill(pixels, 0); // Clear to transparent
+                    
+                    double[] zBuffer = new double[pixels.length];
+                    Arrays.fill(zBuffer, Double.NEGATIVE_INFINITY);
 
+                    // Create a thread pool with optimal threads for CPU
+                    int processors = Runtime.getRuntime().availableProcessors();
+                    ExecutorService executor = Executors.newFixedThreadPool(processors);
+                    
+                    List<Future<?>> futures = new ArrayList<>();
+
+                    for (Polygon poly : polygon_list) {
+                        // Pre-transform all vertices first
+                        List<Vertex> transformed = new ArrayList<>(poly.number_of_sides);
+                        for (int i = 0; i < poly.number_of_sides; i++) {
+                            Vertex v = transform.transform(poly.vertex_array.get(i));
+                            transformed.add(new Vertex(
+                                v.x + getWidth()/2, 
+                                v.y + getHeight()/2, 
+                                v.z
+                            ));
+                        }
+
+                        // Calculate bounds
+                        int minX = transformed.stream().mapToInt(v -> (int) v.x).min().orElse(0);
+                        int maxX = transformed.stream().mapToInt(v -> (int) v.x).max().orElse(img.getWidth());
+                        int minY = transformed.stream().mapToInt(v -> (int) v.y).min().orElse(0);
+                        int maxY = transformed.stream().mapToInt(v -> (int) v.y).max().orElse(img.getHeight());
+
+                        // Split Y range into chunks for parallel processing
+                        int yChunkSize = (maxY - minY + 1) / processors + 1;
+                        
+                        for (int yStart = minY; yStart <= maxY; yStart += yChunkSize) {
+                            final int yEnd = Math.min(yStart + yChunkSize, maxY);
+                            final int yStartFinal = yStart;
+                            
+                            futures.add(executor.submit(() -> {
+                                for (int y = yStartFinal; y <= yEnd; y++) {
+                                    for (int x = minX; x <= maxX; x++) {
+                                        boolean inTriangle = false;
+                                        boolean inTriangle2 = false;
+                                        double depth = Double.NEGATIVE_INFINITY;
+                                        final int idx = y * img.getWidth() + x;
+
+                                        if (poly.number_of_sides == 3) {
+                                            inTriangle = isInsideTriangle(x, y, transformed.get(0), transformed.get(1), transformed.get(2));
+                                            if (inTriangle) {
+                                                depth = calculateDepth(x, y, transformed.get(0), 
+                                                    transformed.get(1), transformed.get(2));
+                                            }
+                                        } 
+                                        else if (poly.number_of_sides == 4) {
+                                            inTriangle = isInsideTriangle(x, y, 
+                                                transformed.get(0), transformed.get(1), transformed.get(2));
+                                            inTriangle2 = isInsideTriangle(x, y, 
+                                                transformed.get(0), transformed.get(2), transformed.get(3));
+                                            
+                                            if (inTriangle) {
+                                                depth = calculateDepth(x, y, 
+                                                    transformed.get(0), transformed.get(1), transformed.get(2));
+                                            }
+                                            if (inTriangle2) {
+                                                double depth2 = calculateDepth(x, y, 
+                                                    transformed.get(0), transformed.get(2), transformed.get(3));
+                                                depth = Math.max(depth, depth2);
+                                            }
+                                        }
+
+                                        if ((inTriangle || inTriangle2) && depth > zBuffer[idx]) {
+                                            synchronized(zBuffer) {
+                                                if (depth > zBuffer[idx]) {
+                                                    zBuffer[idx] = depth;
+                                                    pixels[idx] = poly.color.getRGB();
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }));
+                        }
+                    }
+
+                    // Wait for all tasks to complete
+                    for (Future<?> f : futures) {
+                        try { f.get(); } catch (Exception e) { /* Handle exception */ }
+                    }
+                    executor.shutdown();
+
+                    g2.drawImage(img, 0, 0, null);
+                }
+
+            }
+        
+        };
         xySlider.addChangeListener(e -> renderPanel.repaint());
         xzSlider.addChangeListener(e -> renderPanel.repaint());
         renderPanel.setLayout(new BorderLayout());
@@ -201,16 +359,18 @@ public class GUI implements ActionListener, ChangeListener {
         
         // Panel for buttons (RIGHT SIDE)
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(3, 1, 20, 20)); // 3 buttons stacked vertically
+        buttonPanel.setLayout(new GridLayout(4, 1, 20, 20)); // 3 buttons stacked vertically
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20)); // Padding
         buttonPanel.add(ClickButton);
         buttonPanel.add(ResetButton);
+        buttonPanel.add(ToggleWireframeButton);
         buttonPanel.add(ExitButton);
         buttonPanel.setBackground(Color.GRAY);
 
         // Panel for labels (TOP)
         JPanel topPanel = new JPanel(new GridLayout(2, 1));
         topPanel.add(label);
+        topPanel.add(WireFramelabel);
         // topPanel.add(xzLabel);
         // topPanel.add(xyLabel);
         topPanel.setBackground(Color.GRAY);
@@ -413,8 +573,51 @@ public class GUI implements ActionListener, ChangeListener {
                 }
             }
         }
+        if (e.getSource() == ToggleWireframeButton) {
+            renderPanel.repaint();
+            // Toggle auto-rotation state
+           ToggleWireframe  = !ToggleWireframe;
+            // AutoRotateButton.setText(ToggleWireframe ? "↺" : "▶");
+            if (!ToggleWireframe) {
+            } else {
+            }
+            WireFramelabel.setText("Toggle WireFrame:  " + ToggleWireframe);
+        }
         label.setText("Number of clicks:  " + clicks);
     }
+
+    //HERE LIES GPT
+
+     private double[] isPointInsideTriangle(int px, int py, Vertex v1, Vertex v2, Vertex v3) {
+        double areaOrig = triangleArea(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y);
+        double area1 = triangleArea(px, py, v2.x, v2.y, v3.x, v3.y);
+        double area2 = triangleArea(v1.x, v1.y, px, py, v3.x, v3.y);
+        double area3 = triangleArea(v1.x, v1.y, v2.x, v2.y, px, py);
+        double arr[] = {areaOrig, area1, area2, area3};
+        return arr;
+    }
+
+    private double triangleArea(double x1, double y1, double x2, double y2, double x3, double y3) {
+        return Math.abs((x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / 2.0);
+    }
+
+    private boolean isInsideTriangle(int x, int y, Vertex v1, Vertex v2, Vertex v3) {
+        double d1 = (x - v2.x) * (v1.y - v2.y) - (v1.x - v2.x) * (y - v2.y);
+        double d2 = (x - v3.x) * (v2.y - v3.y) - (v2.x - v3.x) * (y - v3.y);
+        double d3 = (x - v1.x) * (v3.y - v1.y) - (v3.x - v1.x) * (y - v1.y);
+        return (d1 >= 0 && d2 >= 0 && d3 >= 0) || (d1 <= 0 && d2 <= 0 && d3 <= 0);
+    }
+
+    private double calculateDepth(int x, int y, Vertex v1, Vertex v2, Vertex v3) {
+        double det = (v2.y - v3.y) * (v1.x - v3.x) + (v3.x - v2.x) * (v1.y - v3.y);
+        double l1 = ((v2.y - v3.y) * (x - v3.x) + (v3.x - v2.x) * (y - v3.y)) / det;
+        double l2 = ((v3.y - v1.y) * (x - v3.x) + (v1.x - v3.x) * (y - v3.y)) / det;
+        double l3 = 1.0 - l1 - l2;
+        return l1 * v1.z + l2 * v2.z + l3 * v3.z;
+    }
+
+
+
 
     // Handle slider movement
     public void stateChanged(ChangeEvent e) {
