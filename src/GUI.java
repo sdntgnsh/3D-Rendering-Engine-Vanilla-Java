@@ -2,7 +2,11 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import javax.swing.Timer;
+
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -225,63 +229,116 @@ public class GUI implements ActionListener, ChangeListener {
     }
 
     // Method to add key bindings to the root pane
+    // private void addKeyBindings() {
+    //     JRootPane rootPane = frame.getRootPane();
+    //     InputMap im = rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+    //     ActionMap am = rootPane.getActionMap();
+
+
+    //      // FOR MAKING ARROW KEYS WORK AS INTENDED
+    //     xzSlider.setFocusable(false);
+    //     xySlider.setFocusable(false);
+
+
+    //     // Left movement: left arrow and 'A'
+    //     im.put(KeyStroke.getKeyStroke("LEFT"), "moveLeft");
+    //     im.put(KeyStroke.getKeyStroke('A'), "moveLeft");
+    //     im.put(KeyStroke.getKeyStroke('a'), "moveLeft");
+    //     am.put("moveLeft", new AbstractAction() {
+    //         @Override
+    //         public void actionPerformed(ActionEvent e) {
+    //             xzSlider.setValue(xzSlider.getValue() - 1);
+    //         }
+    //     });
+
+       
+
+
+    //     // Right movement: right arrow and 'D'
+    //     im.put(KeyStroke.getKeyStroke("RIGHT"), "moveRight");
+    //     im.put(KeyStroke.getKeyStroke('d'), "moveRight");
+    //     im.put(KeyStroke.getKeyStroke('D'), "moveRight");
+    //     am.put("moveRight", new AbstractAction() {
+    //         @Override
+    //         public void actionPerformed(ActionEvent e) {
+    //             xzSlider.setValue(xzSlider.getValue() + 1);
+    //         }
+    //     });
+
+    //     // Up movement: up arrow and 'W'
+    //     im.put(KeyStroke.getKeyStroke("UP"), "moveUp");
+    //     im.put(KeyStroke.getKeyStroke('W'), "moveUp");
+    //     im.put(KeyStroke.getKeyStroke('w'), "moveUp");
+    //     am.put("moveUp", new AbstractAction() {
+    //         @Override
+    //         public void actionPerformed(ActionEvent e) {
+    //             xySlider.setValue(xySlider.getValue() + 1);
+    //         }
+    //     });
+
+    //     // Down movement: down arrow and 'S'
+    //     im.put(KeyStroke.getKeyStroke("DOWN"), "moveDown");
+    //     im.put(KeyStroke.getKeyStroke('S'), "moveDown");
+    //     im.put(KeyStroke.getKeyStroke('s'), "moveDown");
+    //     am.put("moveDown", new AbstractAction() {
+    //         @Override
+    //         public void actionPerformed(ActionEvent e) {
+    //             xySlider.setValue(xySlider.getValue() - 1);
+    //         }
+    //     });
+    // }
+
+    private final Set<Integer> pressedKeys = new HashSet<>();
+    private Timer movementTimer;
+
     private void addKeyBindings() {
         JRootPane rootPane = frame.getRootPane();
         InputMap im = rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap am = rootPane.getActionMap();
 
-
-         // FOR MAKING ARROW KEYS WORK AS INTENDED
+        // Disable focus so sliders don't capture arrow keys
         xzSlider.setFocusable(false);
         xySlider.setFocusable(false);
 
+        // Key Press Actions
+        int[] keys = {KeyEvent.VK_LEFT, KeyEvent.VK_A, KeyEvent.VK_RIGHT, KeyEvent.VK_D,
+                    KeyEvent.VK_UP, KeyEvent.VK_W, KeyEvent.VK_DOWN, KeyEvent.VK_S};
+        
+        for (int key : keys) {
+            im.put(KeyStroke.getKeyStroke(key, 0, false), "pressed-" + key);
+            am.put("pressed-" + key, new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    pressedKeys.add(key);
+                }
+            });
 
-        // Left movement: left arrow and 'A'
-        im.put(KeyStroke.getKeyStroke("LEFT"), "moveLeft");
-        im.put(KeyStroke.getKeyStroke('A'), "moveLeft");
-        im.put(KeyStroke.getKeyStroke('a'), "moveLeft");
-        am.put("moveLeft", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+            im.put(KeyStroke.getKeyStroke(key, 0, true), "released-" + key);
+            am.put("released-" + key, new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    pressedKeys.remove(key);
+                }
+            });
+        }
+
+        // Timer to update sliders based on pressed keys
+        movementTimer = new Timer(30, e -> {
+            if (pressedKeys.contains(KeyEvent.VK_LEFT) || pressedKeys.contains(KeyEvent.VK_A)) {
                 xzSlider.setValue(xzSlider.getValue() - 1);
             }
-        });
-
-       
-
-
-        // Right movement: right arrow and 'D'
-        im.put(KeyStroke.getKeyStroke("RIGHT"), "moveRight");
-        im.put(KeyStroke.getKeyStroke('d'), "moveRight");
-        im.put(KeyStroke.getKeyStroke('D'), "moveRight");
-        am.put("moveRight", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+            if (pressedKeys.contains(KeyEvent.VK_RIGHT) || pressedKeys.contains(KeyEvent.VK_D)) {
                 xzSlider.setValue(xzSlider.getValue() + 1);
             }
-        });
-
-        // Up movement: up arrow and 'W'
-        im.put(KeyStroke.getKeyStroke("UP"), "moveUp");
-        im.put(KeyStroke.getKeyStroke('W'), "moveUp");
-        im.put(KeyStroke.getKeyStroke('w'), "moveUp");
-        am.put("moveUp", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+            if (pressedKeys.contains(KeyEvent.VK_UP) || pressedKeys.contains(KeyEvent.VK_W)) {
                 xySlider.setValue(xySlider.getValue() + 1);
             }
-        });
-
-        // Down movement: down arrow and 'S'
-        im.put(KeyStroke.getKeyStroke("DOWN"), "moveDown");
-        im.put(KeyStroke.getKeyStroke('S'), "moveDown");
-        im.put(KeyStroke.getKeyStroke('s'), "moveDown");
-        am.put("moveDown", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+            if (pressedKeys.contains(KeyEvent.VK_DOWN) || pressedKeys.contains(KeyEvent.VK_S)) {
                 xySlider.setValue(xySlider.getValue() - 1);
             }
         });
+
+        movementTimer.start();
     }
 
     // Handle button clicks
