@@ -12,8 +12,9 @@ import javax.swing.event.ChangeListener;
 public class GUI implements ActionListener, ChangeListener {
     private int clicks = 0;
     private JLabel label = new JLabel("Number of clicks:  0");
+    private JLabel WireFramelabel = new JLabel("Toggle WireFrame:  0");
     private JFrame frame;
-    private JButton ClickButton, ResetButton, ExitButton, AutoRotateButton;
+    private JButton ClickButton, ResetButton, ExitButton, AutoRotateButton, ToggleWireframeButton;
     private JLabel xzLabel, xyLabel;
     private JSlider xzSlider, xySlider;
     private JPanel renderPanel, xzPanel, xyPanel, sliderPanel;
@@ -29,6 +30,7 @@ public class GUI implements ActionListener, ChangeListener {
     private boolean isAutoRotating = false; // Flag to block slider feedback
 
     private boolean autoRotationEnabled = true;
+    private boolean ToggleWireframe = true;
 
     public GUI() {
         frame = new JFrame("Main Application");
@@ -45,19 +47,23 @@ public class GUI implements ActionListener, ChangeListener {
         ClickButton = new JButton("Toggle Shape");
         ResetButton = new JButton("Reset"); 
         ExitButton = new JButton("Exit Application");
+        ToggleWireframeButton = new JButton("Toggle WireFrame");
         AutoRotateButton = new JButton("");
         Dimension buttonSize = new Dimension(screenSize.width/6, screenSize.width/50);
         ClickButton.setPreferredSize(buttonSize);
         ResetButton.setPreferredSize(buttonSize);
         ExitButton.setPreferredSize(buttonSize);
+        ToggleWireframeButton.setPreferredSize(buttonSize);
         AutoRotateButton.setPreferredSize(new Dimension(20, 20));
 
         ClickButton.addActionListener(this);
         ResetButton.addActionListener(this);
         ExitButton.addActionListener(this);
+        ToggleWireframeButton.addActionListener(this);
 
         ClickButton.setBackground(Color.LIGHT_GRAY);
         ResetButton.setBackground(Color.LIGHT_GRAY);
+        ToggleWireframeButton.setBackground(Color.LIGHT_GRAY);
         AutoRotateButton.setBackground(Color.GREEN);
         ExitButton.setBackground(Color.RED);
 
@@ -201,16 +207,18 @@ public class GUI implements ActionListener, ChangeListener {
         
         // Panel for buttons (RIGHT SIDE)
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(3, 1, 20, 20)); // 3 buttons stacked vertically
+        buttonPanel.setLayout(new GridLayout(4, 1, 20, 20)); // 3 buttons stacked vertically
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20)); // Padding
         buttonPanel.add(ClickButton);
         buttonPanel.add(ResetButton);
+        buttonPanel.add(ToggleWireframeButton);
         buttonPanel.add(ExitButton);
         buttonPanel.setBackground(Color.GRAY);
 
         // Panel for labels (TOP)
         JPanel topPanel = new JPanel(new GridLayout(2, 1));
         topPanel.add(label);
+        topPanel.add(WireFramelabel);
         // topPanel.add(xzLabel);
         // topPanel.add(xyLabel);
         topPanel.setBackground(Color.GRAY);
@@ -410,6 +418,15 @@ public class GUI implements ActionListener, ChangeListener {
                     autoRotateTimer.start();
                 }
             }
+        }
+        if (e.getSource() == ToggleWireframeButton) {
+            // Toggle auto-rotation state
+           ToggleWireframe  = !ToggleWireframe;
+            // AutoRotateButton.setText(ToggleWireframe ? "↺" : "▶");
+            if (!ToggleWireframe) {
+            } else {
+            }
+            WireFramelabel.setText("Toggle WireFrame:  " + ToggleWireframe);
         }
         label.setText("Number of clicks:  " + clicks);
     }
