@@ -194,11 +194,12 @@ public class GUI implements ActionListener, ChangeListener {
                 else{
                     Shape_Coords = CoordinateCreator.create_square_coords(50);
                 }
-                Color colorArr[] = {Color.RED,Color.WHITE, Color.GRAY};
+                Color colorArr[] = {new Color(205, 180, 219), new Color(255, 200, 221), new Color(255, 175, 204), new Color(189, 224, 254), new Color(162, 210, 255), new Color(202, 240, 248)};
 
                 int inx  = 0;
                 for(Vertex[] coords : Shape_Coords){
-                    polygon_list.add(new Polygon(coords, colorArr[inx++ % colorArr.length]));
+                    polygon_list.add(new Polygon(coords, colorArr[inx % colorArr.length]));
+                    inx++;
                 }
 
 
