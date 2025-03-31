@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.swing.Timer;
-
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -19,6 +17,16 @@ public class GUI implements ActionListener, ChangeListener {
     private JLabel xzLabel, xyLabel;
     private JSlider xzSlider, xySlider;
     private JPanel renderPanel, xzPanel, xyPanel, sliderPanel;
+
+    private Timer autoRotateTimer;
+    private Timer idleCheckTimer;
+    private long lastUserInputTime;
+    private static final long IDLE_TIMEOUT = 500;
+
+    private double totalRotationAngleXZ = 0.0;
+    private double totalRotationAngleXY = 0.0;
+    private static final double AUTO_ROTATION_SPEED = 1.0; 
+    private boolean isAutoRotating = false; // Flag to block slider feedback
 
     public GUI() {
         frame = new JFrame("Main Application");
@@ -113,48 +121,64 @@ public class GUI implements ActionListener, ChangeListener {
                 g2.fillRect(0, 0, getWidth(), getHeight());
                 
                 // Rendering magic will happen here
-                List<Triangle> tris = new ArrayList<>();
-                tris.add(new Triangle(new Vertex(100, 100, 100),
-                                    new Vertex(-100, -100, 100),
-                                    new Vertex(-100, 100, -100),
-                                    Color.WHITE));
-                tris.add(new Triangle(new Vertex(100, 100, 100),
-                                    new Vertex(-100, -100, 100),
-                                    new Vertex(100, -100, -100),
-                                    Color.RED));
-                tris.add(new Triangle(new Vertex(-100, 100, -100),
-                                    new Vertex(100, -100, -100),
-                                    new Vertex(100, 100, 100),
-                                    Color.GREEN));
-                tris.add(new Triangle(new Vertex(-100, 100, -100),
-                                    new Vertex(100, -100, -100),
-                                    new Vertex(-100, -100, 100),
-                                    Color.BLUE));
+                List<Polygon> sqare_list = new ArrayList<>();
 
-                double heading = Math.toRadians(xzSlider.getValue()) * 5;
+                List<Polygon> polygon_list = new ArrayList<>();
+
+                List<Vertex[]> Shape_Coords = new ArrayList<>(); 
+
+                
+            // Adding coordinates to Shape_Coords
+                Shape_Coords = CoordinateCreator.create_square_coords(200);
+
+                for(Vertex[] coords : Shape_Coords){
+                    polygon_list.add(new Polygon(coords, Color.RED));
+                }
+
+
+                for(Vertex[] coords : Shape_Coords){
+                    sqare_list.add(new Polygon(coords, Color.RED));
+                }
+
+
+                double heading = Math.toRadians(totalRotationAngleXZ); // Use tracked angle
+                double pitch = Math.toRadians(totalRotationAngleXY);    // Use tracked angle
+
                 Matrix3 headingTransform = new Matrix3(new double[] {
-                        Math.cos(heading), 0, Math.sin(heading),
-                        0, 1, 0,
-                        -Math.sin(heading), 0, Math.cos(heading)
-                    });
-                double pitch = Math.toRadians(xySlider.getValue()) * 5;
-                Matrix3 pitchTransform = new Matrix3(new double[] {
-                        1, 0, 0,
-                        0, Math.cos(pitch), Math.sin(pitch),
-                        0, -Math.sin(pitch), Math.cos(pitch)
-                    });
-                Matrix3 transform = headingTransform.multiply(pitchTransform);
+                    Math.cos(heading), 0, Math.sin(heading),
+                    0, 1, 0,
+                    -Math.sin(heading), 0, Math.cos(heading)
+                });
 
+                Matrix3 pitchTransform = new Matrix3(new double[] {
+                    1, 0, 0,
+                    0, Math.cos(pitch), Math.sin(pitch),
+                    0, -Math.sin(pitch), Math.cos(pitch)
+                });
+
+                Matrix3 transform = headingTransform.multiply(pitchTransform);
                 g2.translate(getWidth() / 2, getHeight() / 2);
                 g2.setColor(Color.WHITE);
-                for (Triangle t : tris) {
-                    Vertex v1 = transform.transform(t.v1);
-                    Vertex v2 = transform.transform(t.v2);
-                    Vertex v3 = transform.transform(t.v3);
+                
+                for (Polygon t : polygon_list) {
+
+
+                    for(int i = 0; i < t.number_of_sides; i++){
+
+                        t.vertex_array.set(i, transform.transform(t.vertex_array.get(i)) );
+                    }
+
+
                     Path2D path = new Path2D.Double();
-                    path.moveTo(v1.x, v1.y);
-                    path.lineTo(v2.x, v2.y);
-                    path.lineTo(v3.x, v3.y);
+                    Vertex prevVertex = t.vertex_array.get(0);
+                    for(Vertex v : t.vertex_array){ 
+                        path.moveTo(prevVertex.x, prevVertex.y);
+                        path.lineTo(v.x, v.y);
+                        prevVertex = v;
+                    }
+                    path.moveTo(prevVertex.x, prevVertex.y);
+                    path.lineTo(t.vertex_array.get(0).x, t.vertex_array.get(0).y);
+
                     path.closePath();
                     g2.draw(path);
                 }
@@ -226,68 +250,80 @@ public class GUI implements ActionListener, ChangeListener {
                 xyPanel.revalidate();
             }
         });
+
+        autoRotateTimer = new Timer(30, e -> {
+            isAutoRotating = true; // Block stateChanged updates during auto-rotation
+            
+            // Increment angles continuously
+            totalRotationAngleXZ += AUTO_ROTATION_SPEED;
+            totalRotationAngleXY += AUTO_ROTATION_SPEED;
+            
+            // Map angles to slider range (-50 to 50) using modulo
+            xzSlider.setValue((int) ((totalRotationAngleXZ / 5) % 100 - 50));
+            xySlider.setValue((int) ((totalRotationAngleXY / 5) % 100 - 50));
+            
+            isAutoRotating = false;
+            renderPanel.repaint();
+        });
+
+        idleCheckTimer = new Timer(500, e -> {
+            if (System.currentTimeMillis() - lastUserInputTime > IDLE_TIMEOUT) {
+                if (!autoRotateTimer.isRunning()) {
+                    autoRotateTimer.start();
+                }
+            }
+        });
+
+        autoRotateTimer.setInitialDelay(0);
+        idleCheckTimer.setInitialDelay(0);
+        idleCheckTimer.start();
+        lastUserInputTime = System.currentTimeMillis();
+
+        // Add mouse listeners to sliders for user input detection
+        xzSlider.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                onUserInput();
+            }
+        });
+
+        xySlider.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                onUserInput();
+            }
+        });
+
+        // Add onUserInput to mouse wheel listeners
+        xzSlider.addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                onUserInput();
+                int value = xzSlider.getValue();
+                int notches = e.getWheelRotation();
+                xzSlider.setValue(value - (notches * 2));
+            }
+        });
+
+        xySlider.addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                onUserInput();
+                int value = xySlider.getValue();
+                int notches = e.getWheelRotation();
+                xySlider.setValue(value - (notches * 2));
+            }
+        });
     }
 
-    // Method to add key bindings to the root pane
-    // private void addKeyBindings() {
-    //     JRootPane rootPane = frame.getRootPane();
-    //     InputMap im = rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-    //     ActionMap am = rootPane.getActionMap();
+    private void onUserInput() {
+        lastUserInputTime = System.currentTimeMillis();
+        if (autoRotateTimer.isRunning()) {
+            autoRotateTimer.stop();
+        }
+    }
 
-
-    //      // FOR MAKING ARROW KEYS WORK AS INTENDED
-    //     xzSlider.setFocusable(false);
-    //     xySlider.setFocusable(false);
-
-
-    //     // Left movement: left arrow and 'A'
-    //     im.put(KeyStroke.getKeyStroke("LEFT"), "moveLeft");
-    //     im.put(KeyStroke.getKeyStroke('A'), "moveLeft");
-    //     im.put(KeyStroke.getKeyStroke('a'), "moveLeft");
-    //     am.put("moveLeft", new AbstractAction() {
-    //         @Override
-    //         public void actionPerformed(ActionEvent e) {
-    //             xzSlider.setValue(xzSlider.getValue() - 1);
-    //         }
-    //     });
-
-       
-
-
-    //     // Right movement: right arrow and 'D'
-    //     im.put(KeyStroke.getKeyStroke("RIGHT"), "moveRight");
-    //     im.put(KeyStroke.getKeyStroke('d'), "moveRight");
-    //     im.put(KeyStroke.getKeyStroke('D'), "moveRight");
-    //     am.put("moveRight", new AbstractAction() {
-    //         @Override
-    //         public void actionPerformed(ActionEvent e) {
-    //             xzSlider.setValue(xzSlider.getValue() + 1);
-    //         }
-    //     });
-
-    //     // Up movement: up arrow and 'W'
-    //     im.put(KeyStroke.getKeyStroke("UP"), "moveUp");
-    //     im.put(KeyStroke.getKeyStroke('W'), "moveUp");
-    //     im.put(KeyStroke.getKeyStroke('w'), "moveUp");
-    //     am.put("moveUp", new AbstractAction() {
-    //         @Override
-    //         public void actionPerformed(ActionEvent e) {
-    //             xySlider.setValue(xySlider.getValue() + 1);
-    //         }
-    //     });
-
-    //     // Down movement: down arrow and 'S'
-    //     im.put(KeyStroke.getKeyStroke("DOWN"), "moveDown");
-    //     im.put(KeyStroke.getKeyStroke('S'), "moveDown");
-    //     im.put(KeyStroke.getKeyStroke('s'), "moveDown");
-    //     am.put("moveDown", new AbstractAction() {
-    //         @Override
-    //         public void actionPerformed(ActionEvent e) {
-    //             xySlider.setValue(xySlider.getValue() - 1);
-    //         }
-    //     });
-    // }
-
+   
     private final Set<Integer> pressedKeys = new HashSet<>();
     private Timer movementTimer;
 
@@ -310,6 +346,7 @@ public class GUI implements ActionListener, ChangeListener {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     pressedKeys.add(key);
+                    onUserInput();
                 }
             });
 
@@ -359,17 +396,23 @@ public class GUI implements ActionListener, ChangeListener {
 
     // Handle slider movement
     public void stateChanged(ChangeEvent e) {
+        if (isAutoRotating) return; // Ignore auto-rotation updates
+        
         if (e.getSource() == xzSlider) {
+            // Directly set angle based on slider position
+            totalRotationAngleXZ = xzSlider.getValue() * 5.0;
             xzLabel.setText("XZ Position: " + xzSlider.getValue());
+            onUserInput(); // Stop auto-rotation
         }
         if (e.getSource() == xySlider) {
+            totalRotationAngleXY = xySlider.getValue() * 5.0;
             xyLabel.setText("XY Position: " + xySlider.getValue());
+            onUserInput(); // Stop auto-rotation
         }
-    }
-
+    }    
     public static void main(String[] args) {
-        new GUI();
-    }
+            new GUI();
+        }
 }
 
 class Vertex {
@@ -383,18 +426,92 @@ class Vertex {
     }
 }
 
-class Triangle {
-    Vertex v1;
-    Vertex v2;
-    Vertex v3;
+
+
+class Polygon {
+    int number_of_sides = 3;
+
+    public List<Vertex> vertex_array = new ArrayList<>();
+
     Color color;
-    Triangle(Vertex v1, Vertex v2, Vertex v3, Color color) {
-        this.v1 = v1;
-        this.v2 = v2;
-        this.v3 = v3;
+    Polygon(Vertex inp[], Color color) {
+        for(Vertex v : inp){
+            this.vertex_array.add(new Vertex(v.x, v.y, v.z));
+        }
+        number_of_sides = vertex_array.size();
         this.color = color;
     }
 }
+
+class CoordinateCreator {
+
+
+    static List<Vertex[]> create_square_coords(int size){
+        List<Vertex[]> Shape_Coords = new ArrayList<>(); 
+                // Adding coordinates to Shape_Coords
+                Shape_Coords.add(new Vertex[]{new Vertex(size, size, size), // window wall
+                                                new Vertex(size, size, -size),
+                                                new Vertex(size, -size, -size),
+                                                new Vertex(size, -size, size)});
+
+                Shape_Coords.add(new Vertex[]{new Vertex(-size, size, size), // door wall
+                                                new Vertex(-size, size, -size),
+                                                new Vertex(-size, -size, -size),
+                                                new Vertex(-size, -size, size)});
+
+                Shape_Coords.add(new Vertex[]{new Vertex(size, size, size), // bathroom wall
+                                                new Vertex(size, -size, size),
+                                                new Vertex(-size, -size, size),
+                                                new Vertex(-size, size, size)});
+
+                Shape_Coords.add(new Vertex[]{new Vertex(size, size, -size), // opposite to bathroom
+                                                new Vertex(size, -size, -size),
+                                                new Vertex(-size, -size, -size),
+                                                new Vertex(-size, size, -size)});
+
+                Shape_Coords.add(new Vertex[]{new Vertex(size, size, size), // top
+                                                new Vertex(size, size, -size),
+                                                new Vertex(-size, size, -size),
+                                                new Vertex(-size, size, size)});
+
+                Shape_Coords.add(new Vertex[]{new Vertex(size, -size, size), // bottom
+                                                new Vertex(size, -size, -size),
+                                                new Vertex(-size, -size, -size),
+                                                new Vertex(-size, -size, size)});
+
+
+                return Shape_Coords;
+
+        
+    }
+
+    static List<Vertex[]> create_triangle_coords(int size){
+
+        List<Vertex[]> Triangle_coords = new ArrayList<>();
+        // Adding coordinates to Triangle_coords
+        Triangle_coords.add(new Vertex[]{new Vertex(size, size, size),
+                                        new Vertex(-size, -size, size),
+                                        new Vertex(-size, size, -size)});
+
+        Triangle_coords.add(new Vertex[]{new Vertex(size, size, size),
+                                        new Vertex(-size, -size, size),
+                                        new Vertex(size, -size, -size)});
+
+        Triangle_coords.add(new Vertex[]{new Vertex(-size, size, -size),
+                                        new Vertex(size, -size, -size),
+                                        new Vertex(size, size, size)});
+
+        Triangle_coords.add(new Vertex[]{new Vertex(-size, size, -size),
+                                        new Vertex(size, -size, -size),
+                                        new Vertex(-size, -size, size)});
+        return Triangle_coords;
+    }
+
+}
+
+
+
+
 
 class Matrix3 {
     double[] values;
