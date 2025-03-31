@@ -96,6 +96,7 @@ public class GUI implements ActionListener, ChangeListener {
         xzSlider.addChangeListener(this);
         xySlider.addChangeListener(this);
 
+        //Keyboard Bindings
         InputMap inputMap = frame.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap actionMap = frame.getRootPane().getActionMap();
         frame.setFocusable(true);
@@ -111,7 +112,7 @@ public class GUI implements ActionListener, ChangeListener {
         actionMap.put("toggleShape", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ClickButton.doClick(); // Only toggles shape
+                ClickButton.doClick();
             }
         });
         
