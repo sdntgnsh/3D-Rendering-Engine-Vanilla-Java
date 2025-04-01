@@ -215,21 +215,26 @@ public class GUI implements ActionListener, ChangeListener {
             // Adding coordinates to Shape_Coords
 
                 
-                if(clicks % 5 == 0){
+                if(clicks % 7 == 0){
                     Shape_Coords = CoordinateCreator.create_triangle_coords(size);
                 }
-                else if(clicks % 5 == 1){
+                else if(clicks % 7 == 1){
                     Shape_Coords = CoordinateCreator.create_square_coords(size);
                 }
-                else if(clicks % 5 == 2){
+                else if(clicks % 7 == 2){
                     Shape_Coords = CoordinateCreator.create_octahedron_coords(size*2);
-                   
                 }
-                else if(clicks % 5 == 3){
+                else if(clicks % 7 == 3){
                      Shape_Coords = CoordinateCreator.create_icosahedron_coords(size);
                 }
-                else{
+                else if(clicks % 7 == 4){
                     Shape_Coords = CoordinateCreator.create_torus_coords(size);
+                }
+                else if(clicks % 7 == 5){
+                    Shape_Coords = CoordinateCreator.create_mobius_strip_coords(size*2);
+                }
+                else if(clicks % 7 == 6){
+                    Shape_Coords = CoordinateCreator.create_dna_coords(size);
                 }
                 Color colorArr[] = {new Color(205, 180, 219), new Color(255, 200, 221), new Color(255, 175, 204), new Color(189, 224, 254), new Color(162, 210, 255), new Color(202, 240, 248)};
                 Color colorArr2[] = {new Color(255, 173, 173), new Color(255, 214, 165), new Color(253, 255, 182), new Color(202, 255, 191),new Color(155, 246, 255),new Color(160, 196, 255), new Color(189, 178, 255)};
@@ -966,8 +971,99 @@ static List<Vertex[]> create_torus_coords(int size) {
     return polygons;
 }
 
+static List<Vertex[]> create_mobius_strip_coords(int size) {
+    List<Vertex[]> polygons = new ArrayList<>();
+    int segU = 40; // resolution along the u-direction (around the circle)
+    int segV = 10; // resolution along the v-direction (across the width)
+    double R = size * 0.6;  // major radius (circle center)
+    double w = R / 3.0;     // half-width of the strip (you can adjust this)
+    double du = 2 * Math.PI / segU;
+    double dv = 2 * w / segV;  // v runs from -w to +w
 
+    // Create a grid of vertices.
+    // We store segU rows (for different u values) and segV+1 columns (to include both ends of v).
+    Vertex[][] grid = new Vertex[segU][segV + 1];
+    for (int i = 0; i < segU; i++) {
+        double u = i * du;
+        for (int j = 0; j <= segV; j++) {
+            double v = -w + j * dv;
+            double x = (R + v * Math.cos(u / 2)) * Math.cos(u);
+            double y = (R + v * Math.cos(u / 2)) * Math.sin(u);
+            double z = v * Math.sin(u / 2);
+            grid[i][j] = new Vertex(x, y, z);
+        }
+    }
+
+    // Create quadrilateral faces from the grid.
+    // For each face, the vertices are chosen from adjacent grid points.
+    // The twist appears when wrapping around from the last u-segment to the first.
+    for (int i = 0; i < segU; i++) {
+        int nextI = (i + 1) % segU; // For the last row, nextI wraps around to 0.
+        for (int j = 0; j < segV; j++) {
+            // Standard case: if we're not wrapping (i < segU-1), use grid as-is.
+            Vertex v00 = grid[i][j];
+            Vertex v01 = grid[i][j + 1];
+            Vertex v10, v11;
+            if (i != segU - 1) {
+                v10 = grid[nextI][j];
+                v11 = grid[nextI][j + 1];
+            } else {
+                // For the wrap-around row, apply the twist.
+                // At u = 2π (i = segU - 1), a point at v corresponds to a point at u = 0 with -v.
+                // We simulate this by reversing the v-index for the wrap-around row.
+                v10 = grid[nextI][segV - j];
+                v11 = grid[nextI][segV - (j + 1)];
+            }
+            // Add the quadrilateral face.
+            polygons.add(new Vertex[]{v00, v01, v11, v10});
+        }
+    }
+    return polygons;
+}
+
+    static List<Vertex[]> create_dna_coords(int size) {
+    List<Vertex[]> dnaCoords = new ArrayList<>();
+    double radius = size * 0.3; // Radius of the DNA strands
+    double height = size*10; // Total height of the DNA
+    int numTurns = 10; // Fixed number of turns for proportionate scaling
+    int numBasePairs = numTurns * 10; // Proportional base pairs count
     
+    int numSteps = numBasePairs * 2; // Steps for smooth curves
+    double angleStep = (2 * Math.PI * numTurns) / numSteps; // Rotation per step
+    double zStep = height / numSteps; // Height per step
+
+    Vertex[] strandA = new Vertex[numSteps + 1];
+    Vertex[] strandB = new Vertex[numSteps + 1];
+
+    // Generate two helices
+    for (int i = 0; i <= numSteps; i++) {
+        double angle = i * angleStep;
+        double z = i * zStep - (height / 2); // Center DNA at origin
+
+        double xA = radius * Math.cos(angle);
+        double yA = radius * Math.sin(angle);
+        strandA[i] = new Vertex(xA, yA, z);
+
+        double xB = radius * Math.cos(angle + Math.PI);
+        double yB = radius * Math.sin(angle + Math.PI);
+        strandB[i] = new Vertex(xB, yB, z);
+    }
+
+    // Add helices to DNA structure
+    for (int i = 0; i < numSteps; i++) {
+        dnaCoords.add(new Vertex[]{strandA[i], strandA[i + 1]});
+        dnaCoords.add(new Vertex[]{strandB[i], strandB[i + 1]});
+    }
+
+    // Generate base pairs
+    for (int i = 0; i < numSteps; i += 2) { // Every second step
+        dnaCoords.add(new Vertex[]{strandA[i], strandB[i]});
+    }
+
+    return dnaCoords;
+}
+
+
 
 
 }
