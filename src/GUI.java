@@ -35,6 +35,9 @@ public class GUI implements ActionListener, ChangeListener {
     private boolean autoRotationEnabled = true;
     private boolean ToggleWireframe = true;
 
+    private JButton InflateButton;
+    private boolean isInflated = false;
+
     public GUI() {
         frame = new JFrame("Main Application");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -115,6 +118,13 @@ public class GUI implements ActionListener, ChangeListener {
         inputMap.put(KeyStroke.getKeyStroke("Q"), "toggleWireframe");
         inputMap.put(KeyStroke.getKeyStroke("T"), "toggleAutoRotate");
         inputMap.put(KeyStroke.getKeyStroke("E"), "changeColor");
+        inputMap.put(KeyStroke.getKeyStroke("I"), "inflate");
+        actionMap.put("inflate", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                InflateButton.doClick();
+            }
+        });
         
         actionMap.put("toggleShape", new AbstractAction() {
             @Override
@@ -217,6 +227,10 @@ public class GUI implements ActionListener, ChangeListener {
 
                     polygon_list.add(new Polygon(coords, Colors[colorCounter%2][inx % Colors[colorCounter%2].length]));
                     inx++;
+                }
+
+                if (isInflated) {
+                    polygon_list = inflate(polygon_list);
                 }
 
 
@@ -381,12 +395,17 @@ public class GUI implements ActionListener, ChangeListener {
         
         // Panel for buttons (RIGHT SIDE)
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(5, 1, 20, 20)); // 3 buttons stacked vertically
+        buttonPanel.setLayout(new GridLayout(6, 1, 20, 20)); // 3 buttons stacked vertically
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20)); // Padding
+        InflateButton = new JButton("Inflate (I)");
+        InflateButton.setPreferredSize(buttonSize);
+        InflateButton.addActionListener(this);
+        InflateButton.setBackground(Color.LIGHT_GRAY);
         buttonPanel.add(ClickButton);
         buttonPanel.add(ToggleWireframeButton);
         buttonPanel.add(ChangeColorButton);
         buttonPanel.add(ResetButton);
+        buttonPanel.add(InflateButton);
         buttonPanel.add(ExitButton);
         buttonPanel.setBackground(Color.GRAY);
         
@@ -568,6 +587,71 @@ public class GUI implements ActionListener, ChangeListener {
         movementTimer.start();
     }
 
+    private List<Polygon> inflate(List<Polygon> polys) {
+        System.out.println("Inflating " + polys.size() + " polygons"); // Debug
+        List<Polygon> result = new ArrayList<>();
+        for (Polygon poly : polys) {
+            List<Vertex> vertices = poly.vertex_array;
+            Color color = poly.color;
+            
+            if (vertices.size() == 3) { // Triangle subdivision
+                Vertex v1 = vertices.get(0);
+                Vertex v2 = vertices.get(1);
+                Vertex v3 = vertices.get(2);
+
+                Vertex m1 = midPoint(v1, v2);
+                Vertex m2 = midPoint(v2, v3);
+                Vertex m3 = midPoint(v1, v3);
+
+                result.add(new Polygon(new Vertex[]{v1, m1, m3}, color));
+                result.add(new Polygon(new Vertex[]{v2, m1, m2}, color));
+                result.add(new Polygon(new Vertex[]{v3, m2, m3}, color));
+                result.add(new Polygon(new Vertex[]{m1, m2, m3}, color));
+            } 
+            else if (vertices.size() == 4) { // Square subdivision
+                Vertex v1 = vertices.get(0);
+                Vertex v2 = vertices.get(1);
+                Vertex v3 = vertices.get(2);
+                Vertex v4 = vertices.get(3);
+
+                Vertex m1 = midPoint(v1, v2);
+                Vertex m2 = midPoint(v2, v3);
+                Vertex m3 = midPoint(v3, v4);
+                Vertex m4 = midPoint(v4, v1);
+                Vertex center = midPoint(m1, m3);
+
+                result.add(new Polygon(new Vertex[]{v1, m1, center, m4}, color));
+                result.add(new Polygon(new Vertex[]{m1, v2, m2, center}, color));
+                result.add(new Polygon(new Vertex[]{center, m2, v3, m3}, color));
+                result.add(new Polygon(new Vertex[]{m4, center, m3, v4}, color));
+            }
+        }
+
+        // Normalize vertices
+        double targetSize = Math.sqrt(30000) * 1.4;
+        for (Polygon poly : result) {
+            for (Vertex v : poly.vertex_array) {
+                double length = Math.sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+                if (length > 0) {
+                    double scale = targetSize / length;
+                    v.x *= scale;
+                    v.y *= scale;
+                    v.z *= scale;
+                }
+            }
+        }
+        System.out.println("Created " + result.size() + " inflated polygons"); // Debug
+        return result;
+    }
+
+    private Vertex midPoint(Vertex a, Vertex b) {
+        return new Vertex(
+            (a.x + b.x)/2,
+            (a.y + b.y)/2,
+            (a.z + b.z)/2
+        );
+    }
+
     // Handle button clicks
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == ExitButton) {
@@ -612,6 +696,11 @@ public class GUI implements ActionListener, ChangeListener {
             } else {
             }
             WireFramelabel.setText("Toggle WireFrame:  " + ToggleWireframe);
+        }
+        if (e.getSource() == InflateButton) {
+            isInflated = !isInflated;
+            System.out.println("Inflate toggled: " + isInflated); // Debug
+            renderPanel.repaint();
         }
         label.setText("Number of clicks:  " + clicks);
     }
@@ -703,36 +792,37 @@ class CoordinateCreator {
 
     static List<Vertex[]> create_square_coords(int size){
         List<Vertex[]> Shape_Coords = new ArrayList<>(); 
+        int baseSize = (int)(size * 0.6);
                 // Adding coordinates to Shape_Coords
-                Shape_Coords.add(new Vertex[]{new Vertex(size, size, size), // window wall
-                                                new Vertex(size, size, -size),
-                                                new Vertex(size, -size, -size),
-                                                new Vertex(size, -size, size)});
+                Shape_Coords.add(new Vertex[]{new Vertex(baseSize, baseSize, baseSize), // window wall
+                                                new Vertex(baseSize, baseSize, -baseSize),
+                                                new Vertex(baseSize, -baseSize, -baseSize),
+                                                new Vertex(baseSize, -baseSize, baseSize)});
 
-                Shape_Coords.add(new Vertex[]{new Vertex(-size, size, size), // door wall
-                                                new Vertex(-size, size, -size),
-                                                new Vertex(-size, -size, -size),
-                                                new Vertex(-size, -size, size)});
+                Shape_Coords.add(new Vertex[]{new Vertex(-baseSize, baseSize, baseSize), // door wall
+                                                new Vertex(-baseSize, baseSize, -baseSize),
+                                                new Vertex(-baseSize, -baseSize, -baseSize),
+                                                new Vertex(-baseSize, -baseSize, baseSize)});
 
-                Shape_Coords.add(new Vertex[]{new Vertex(size, size, size), // bathroom wall
-                                                new Vertex(size, -size, size),
-                                                new Vertex(-size, -size, size),
-                                                new Vertex(-size, size, size)});
+                Shape_Coords.add(new Vertex[]{new Vertex(baseSize, baseSize, baseSize), // bathroom wall
+                                                new Vertex(baseSize, -baseSize, baseSize),
+                                                new Vertex(-baseSize, -baseSize, baseSize),
+                                                new Vertex(-baseSize, baseSize, baseSize)});
 
-                Shape_Coords.add(new Vertex[]{new Vertex(size, size, -size), // opposite to bathroom
-                                                new Vertex(size, -size, -size),
-                                                new Vertex(-size, -size, -size),
-                                                new Vertex(-size, size, -size)});
+                Shape_Coords.add(new Vertex[]{new Vertex(baseSize, baseSize, -baseSize), // opposite to bathroom
+                                                new Vertex(baseSize, -baseSize, -baseSize),
+                                                new Vertex(-baseSize, -baseSize, -baseSize),
+                                                new Vertex(-baseSize, baseSize, -baseSize)});
 
-                Shape_Coords.add(new Vertex[]{new Vertex(size, size, size), // top
-                                                new Vertex(size, size, -size),
-                                                new Vertex(-size, size, -size),
-                                                new Vertex(-size, size, size)});
+                Shape_Coords.add(new Vertex[]{new Vertex(baseSize, baseSize, baseSize), // top
+                                                new Vertex(baseSize, baseSize, -baseSize),
+                                                new Vertex(-baseSize, baseSize, -baseSize),
+                                                new Vertex(-baseSize, baseSize, baseSize)});
 
-                Shape_Coords.add(new Vertex[]{new Vertex(size, -size, size), // bottom
-                                                new Vertex(size, -size, -size),
-                                                new Vertex(-size, -size, -size),
-                                                new Vertex(-size, -size, size)});
+                Shape_Coords.add(new Vertex[]{new Vertex(baseSize, -baseSize, baseSize), // bottom
+                                                new Vertex(baseSize, -baseSize, -baseSize),
+                                                new Vertex(-baseSize, -baseSize, -baseSize),
+                                                new Vertex(-baseSize, -baseSize, baseSize)});
 
 
                 return Shape_Coords;
@@ -743,22 +833,23 @@ class CoordinateCreator {
     static List<Vertex[]> create_triangle_coords(int size){
 
         List<Vertex[]> Triangle_coords = new ArrayList<>();
+        int baseSize = (int)(size * 0.6);
         // Adding coordinates to Triangle_coords
-        Triangle_coords.add(new Vertex[]{new Vertex(size, size, size),
-                                        new Vertex(-size, -size, size),
-                                        new Vertex(-size, size, -size)});
+        Triangle_coords.add(new Vertex[]{new Vertex(baseSize, baseSize, baseSize),
+                                        new Vertex(-baseSize, -baseSize, baseSize),
+                                        new Vertex(-baseSize, baseSize, -baseSize)});
 
-        Triangle_coords.add(new Vertex[]{new Vertex(size, size, size),
-                                        new Vertex(-size, -size, size),
-                                        new Vertex(size, -size, -size)});
+        Triangle_coords.add(new Vertex[]{new Vertex(baseSize, baseSize, baseSize),
+                                        new Vertex(-baseSize, -baseSize, baseSize),
+                                        new Vertex(baseSize, -baseSize, -baseSize)});
 
-        Triangle_coords.add(new Vertex[]{new Vertex(-size, size, -size),
-                                        new Vertex(size, -size, -size),
-                                        new Vertex(size, size, size)});
+        Triangle_coords.add(new Vertex[]{new Vertex(-baseSize, baseSize, -baseSize),
+                                        new Vertex(baseSize, -baseSize, -baseSize),
+                                        new Vertex(baseSize, baseSize, baseSize)});
 
-        Triangle_coords.add(new Vertex[]{new Vertex(-size, size, -size),
-                                        new Vertex(size, -size, -size),
-                                        new Vertex(-size, -size, size)});
+        Triangle_coords.add(new Vertex[]{new Vertex(-baseSize, baseSize, -baseSize),
+                                        new Vertex(baseSize, -baseSize, -baseSize),
+                                        new Vertex(-baseSize, -baseSize, baseSize)});
         return Triangle_coords;
     }
 
