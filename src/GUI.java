@@ -233,7 +233,8 @@ public class GUI implements ActionListener, ChangeListener {
                 }
 
                 if (isInflated) {
-                    polygon_list = inflate(polygon_list);
+                    for (int i = 0; i < 4; i ++)
+                        polygon_list = inflate(polygon_list);
                 }
 
 
