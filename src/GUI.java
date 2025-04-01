@@ -214,18 +214,21 @@ public class GUI implements ActionListener, ChangeListener {
             // Adding coordinates to Shape_Coords
 
                 
-                if(clicks % 4 == 0){
+                if(clicks % 5 == 0){
                     Shape_Coords = CoordinateCreator.create_triangle_coords(size);
                 }
-                else if(clicks % 4 == 1){
+                else if(clicks % 5 == 1){
                     Shape_Coords = CoordinateCreator.create_square_coords(size);
                 }
-                else if(clicks % 4 == 2){
+                else if(clicks % 5 == 2){
                     Shape_Coords = CoordinateCreator.create_octahedron_coords(size*2);
                    
                 }
-                else{
+                else if(clicks % 5 == 3){
                      Shape_Coords = CoordinateCreator.create_icosahedron_coords(size);
+                }
+                else{
+                    Shape_Coords = CoordinateCreator.create_torus_coords(size);
                 }
                 Color colorArr[] = {new Color(205, 180, 219), new Color(255, 200, 221), new Color(255, 175, 204), new Color(189, 224, 254), new Color(162, 210, 255), new Color(202, 240, 248)};
                 Color colorArr2[] = {new Color(255, 173, 173), new Color(255, 214, 165), new Color(253, 255, 182), new Color(202, 255, 191),new Color(155, 246, 255),new Color(160, 196, 255), new Color(189, 178, 255)};
@@ -921,6 +924,46 @@ class CoordinateCreator {
     return octaFaces;
 }
 
+static List<Vertex[]> create_torus_coords(int size) {
+    List<Vertex[]> polygons = new ArrayList<>();
+    int baseSize = (int)(size * 0.6);
+    int segMajor = 20, segMinor = 20; // resolutions along major and minor circles
+    double R = baseSize;      // Major radius
+    double r = baseSize / 2.0;  // Minor radius
+
+    double majorStep = 2 * Math.PI / segMajor;
+    double minorStep = 2 * Math.PI / segMinor;
+
+    // Create a grid of vertices.
+    Vertex[][] grid = new Vertex[segMajor][segMinor];
+    for (int i = 0; i < segMajor; i++) {
+        double phi = i * majorStep;
+        for (int j = 0; j < segMinor; j++) {
+            double theta = j * minorStep;
+            double x = (R + r * Math.cos(theta)) * Math.cos(phi);
+            double y = (R + r * Math.cos(theta)) * Math.sin(phi);
+            double z = r * Math.sin(theta);
+            grid[i][j] = new Vertex(x, y, z);
+        }
+    }
+
+    // Build quadrilateral faces from the grid, wrapping indices as needed.
+    for (int i = 0; i < segMajor; i++) {
+        int nextI = (i + 1) % segMajor;
+        for (int j = 0; j < segMinor; j++) {
+            int nextJ = (j + 1) % segMinor;
+            // Quad face: grid[i][j], grid[nextI][j], grid[nextI][nextJ], grid[i][nextJ]
+            polygons.add(new Vertex[]{
+                grid[i][j],
+                grid[nextI][j],
+                grid[nextI][nextJ],
+                grid[i][nextJ]
+            });
+        }
+    }
+
+    return polygons;
+}
 
 
     
