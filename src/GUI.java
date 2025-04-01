@@ -631,7 +631,7 @@ public class GUI implements ActionListener, ChangeListener {
         }
 
         // Normalize vertices
-        double targetSize = Math.sqrt(30000) * 1.4;
+        double targetSize = Math.sqrt(30000);
         for (Polygon poly : result) {
             for (Vertex v : poly.vertex_array) {
                 double length = Math.sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
