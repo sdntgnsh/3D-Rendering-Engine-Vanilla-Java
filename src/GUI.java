@@ -215,26 +215,29 @@ public class GUI implements ActionListener, ChangeListener {
             // Adding coordinates to Shape_Coords
 
                 
-                if(clicks % 7 == 0){
+                if(clicks % 8 == 0){
                     Shape_Coords = CoordinateCreator.create_triangle_coords(size);
                 }
-                else if(clicks % 7 == 1){
+                else if(clicks % 8 == 1){
                     Shape_Coords = CoordinateCreator.create_square_coords(size);
                 }
-                else if(clicks % 7 == 2){
+                else if(clicks % 8 == 2){
                     Shape_Coords = CoordinateCreator.create_octahedron_coords(size*2);
                 }
-                else if(clicks % 7 == 3){
+                else if(clicks % 8 == 3){
                      Shape_Coords = CoordinateCreator.create_icosahedron_coords(size);
                 }
-                else if(clicks % 7 == 4){
+                else if(clicks % 8 == 4){
                     Shape_Coords = CoordinateCreator.create_torus_coords(size);
                 }
-                else if(clicks % 7 == 5){
+                else if(clicks % 8 == 5){
                     Shape_Coords = CoordinateCreator.create_mobius_strip_coords(size*2);
                 }
-                else if(clicks % 7 == 6){
+                else if(clicks % 8 == 6){
                     Shape_Coords = CoordinateCreator.create_dna_coords(size);
+                }
+                else if(clicks % 8 == 7){
+                    Shape_Coords = CoordinateCreator.create_tesseract_coords(size);
                 }
                 Color colorArr[] = {new Color(205, 180, 219), new Color(255, 200, 221), new Color(255, 175, 204), new Color(189, 224, 254), new Color(162, 210, 255), new Color(202, 240, 248)};
                 Color colorArr2[] = {new Color(255, 173, 173), new Color(255, 214, 165), new Color(253, 255, 182), new Color(202, 255, 191),new Color(155, 246, 255),new Color(160, 196, 255), new Color(189, 178, 255)};
@@ -929,6 +932,44 @@ class CoordinateCreator {
     
     return octaFaces;
 }
+static List<Vertex[]> create_tesseract_coords(int size) {
+    List<Vertex[]> tesseractFaces = new ArrayList<>();
+
+    int halfSize = size / 2;
+
+    // Define the 16 vertices (Projecting from 4D to 3D)
+    Vertex[] vertices = new Vertex[16];
+
+    // 8 vertices for the first cube (w = -1)
+    for (int i = 0; i < 8; i++) {
+        int x = (i & 1) == 0 ? -halfSize : halfSize;
+        int y = (i & 2) == 0 ? -halfSize : halfSize;
+        int z = (i & 4) == 0 ? -halfSize : halfSize;
+        vertices[i] = new Vertex(x, y, z);
+    }
+
+    // 8 vertices for the second cube (w = +1)
+    for (int i = 0; i < 8; i++) {
+        vertices[i + 8] = new Vertex(vertices[i].x * 0.7, vertices[i].y * 0.7, vertices[i].z * 0.7); 
+    }
+
+    // Connect corresponding vertices between two cubes
+    for (int i = 0; i < 8; i++) {
+        tesseractFaces.add(new Vertex[]{vertices[i], vertices[i + 8]});
+    }
+
+    // Connect edges within both cubes
+    int[] edges = {0, 1,  0, 2,  0, 4,  1, 3,  1, 5,  2, 3,  2, 6,  3, 7, 
+                   4, 5,  4, 6,  5, 7,  6, 7};
+    for (int i = 0; i < edges.length; i += 2) {
+        tesseractFaces.add(new Vertex[]{vertices[edges[i]], vertices[edges[i + 1]]});
+        tesseractFaces.add(new Vertex[]{vertices[edges[i] + 8], vertices[edges[i + 1] + 8]});
+    }
+
+    return tesseractFaces;
+}
+
+
 
 static List<Vertex[]> create_torus_coords(int size) {
     List<Vertex[]> polygons = new ArrayList<>();
