@@ -211,11 +211,14 @@ public class GUI implements ActionListener, ChangeListener {
 
                 
             // Adding coordinates to Shape_Coords
-                if(clicks % 2 == 0){
-                    Shape_Coords = CoordinateCreator.create_triangle_coords(100);
+                if(clicks % 3 == 0){
+                    Shape_Coords = CoordinateCreator.create_triangle_coords(200);
+                }
+                else if(clicks % 3 == 1){
+                    Shape_Coords = CoordinateCreator.create_square_coords(200);
                 }
                 else{
-                    Shape_Coords = CoordinateCreator.create_square_coords(100);
+                    Shape_Coords = CoordinateCreator.create_icosahedron_coords(200);
                 }
                 Color colorArr[] = {new Color(205, 180, 219), new Color(255, 200, 221), new Color(255, 175, 204), new Color(189, 224, 254), new Color(162, 210, 255), new Color(202, 240, 248)};
                 Color colorArr2[] = {new Color(255, 173, 173), new Color(255, 214, 165), new Color(253, 255, 182), new Color(202, 255, 191),new Color(155, 246, 255),new Color(160, 196, 255), new Color(189, 178, 255)};
@@ -791,67 +794,103 @@ class CoordinateCreator {
 
 
     static List<Vertex[]> create_square_coords(int size){
-        List<Vertex[]> Shape_Coords = new ArrayList<>(); 
+        List<Vertex[]> square_coords = new ArrayList<>(); 
         int baseSize = (int)(size * 0.6);
-                // Adding coordinates to Shape_Coords
-                Shape_Coords.add(new Vertex[]{new Vertex(baseSize, baseSize, baseSize), // window wall
+                // Adding coordinates to square_coords
+                square_coords.add(new Vertex[]{new Vertex(baseSize, baseSize, baseSize), // window wall
                                                 new Vertex(baseSize, baseSize, -baseSize),
                                                 new Vertex(baseSize, -baseSize, -baseSize),
                                                 new Vertex(baseSize, -baseSize, baseSize)});
 
-                Shape_Coords.add(new Vertex[]{new Vertex(-baseSize, baseSize, baseSize), // door wall
+                square_coords.add(new Vertex[]{new Vertex(-baseSize, baseSize, baseSize), // door wall
                                                 new Vertex(-baseSize, baseSize, -baseSize),
                                                 new Vertex(-baseSize, -baseSize, -baseSize),
                                                 new Vertex(-baseSize, -baseSize, baseSize)});
 
-                Shape_Coords.add(new Vertex[]{new Vertex(baseSize, baseSize, baseSize), // bathroom wall
+                square_coords.add(new Vertex[]{new Vertex(baseSize, baseSize, baseSize), // bathroom wall
                                                 new Vertex(baseSize, -baseSize, baseSize),
                                                 new Vertex(-baseSize, -baseSize, baseSize),
                                                 new Vertex(-baseSize, baseSize, baseSize)});
 
-                Shape_Coords.add(new Vertex[]{new Vertex(baseSize, baseSize, -baseSize), // opposite to bathroom
+                square_coords.add(new Vertex[]{new Vertex(baseSize, baseSize, -baseSize), // opposite to bathroom
                                                 new Vertex(baseSize, -baseSize, -baseSize),
                                                 new Vertex(-baseSize, -baseSize, -baseSize),
                                                 new Vertex(-baseSize, baseSize, -baseSize)});
 
-                Shape_Coords.add(new Vertex[]{new Vertex(baseSize, baseSize, baseSize), // top
+                square_coords.add(new Vertex[]{new Vertex(baseSize, baseSize, baseSize), // top
                                                 new Vertex(baseSize, baseSize, -baseSize),
                                                 new Vertex(-baseSize, baseSize, -baseSize),
                                                 new Vertex(-baseSize, baseSize, baseSize)});
 
-                Shape_Coords.add(new Vertex[]{new Vertex(baseSize, -baseSize, baseSize), // bottom
+                square_coords.add(new Vertex[]{new Vertex(baseSize, -baseSize, baseSize), // bottom
                                                 new Vertex(baseSize, -baseSize, -baseSize),
                                                 new Vertex(-baseSize, -baseSize, -baseSize),
                                                 new Vertex(-baseSize, -baseSize, baseSize)});
 
 
-                return Shape_Coords;
+                return square_coords;
 
         
     }
 
     static List<Vertex[]> create_triangle_coords(int size){
 
-        List<Vertex[]> Triangle_coords = new ArrayList<>();
+        List<Vertex[]> Tetrahedron_coords = new ArrayList<>();
         int baseSize = (int)(size * 0.6);
-        // Adding coordinates to Triangle_coords
-        Triangle_coords.add(new Vertex[]{new Vertex(baseSize, baseSize, baseSize),
+        // Adding coordinates to Tetrahedron_coords
+        Tetrahedron_coords.add(new Vertex[]{new Vertex(baseSize, baseSize, baseSize),
                                         new Vertex(-baseSize, -baseSize, baseSize),
                                         new Vertex(-baseSize, baseSize, -baseSize)});
 
-        Triangle_coords.add(new Vertex[]{new Vertex(baseSize, baseSize, baseSize),
+        Tetrahedron_coords.add(new Vertex[]{new Vertex(baseSize, baseSize, baseSize),
                                         new Vertex(-baseSize, -baseSize, baseSize),
                                         new Vertex(baseSize, -baseSize, -baseSize)});
 
-        Triangle_coords.add(new Vertex[]{new Vertex(-baseSize, baseSize, -baseSize),
+        Tetrahedron_coords.add(new Vertex[]{new Vertex(-baseSize, baseSize, -baseSize),
                                         new Vertex(baseSize, -baseSize, -baseSize),
                                         new Vertex(baseSize, baseSize, baseSize)});
 
-        Triangle_coords.add(new Vertex[]{new Vertex(-baseSize, baseSize, -baseSize),
+        Tetrahedron_coords.add(new Vertex[]{new Vertex(-baseSize, baseSize, -baseSize),
                                         new Vertex(baseSize, -baseSize, -baseSize),
                                         new Vertex(-baseSize, -baseSize, baseSize)});
-        return Triangle_coords;
+        return Tetrahedron_coords;
     }
+
+
+        static List<Vertex[]> create_icosahedron_coords(int size){
+        List<Vertex[]> icosahedron_coords = new ArrayList<>();
+        double phi = (1 + Math.sqrt(5)) / 2; // Golden ratio
+        int baseSize = (int)(size * 0.6);
+        
+        // Defining the 12 vertices of an icosahedron
+        Vertex[] vertices = new Vertex[]{
+            new Vertex(-baseSize, phi * baseSize, 0), new Vertex(baseSize, phi * baseSize, 0),
+            new Vertex(-baseSize, -phi * baseSize, 0), new Vertex(baseSize, -phi * baseSize, 0),
+            new Vertex(0, -baseSize, phi * baseSize), new Vertex(0, baseSize, phi * baseSize),
+            new Vertex(0, -baseSize, -phi * baseSize), new Vertex(0, baseSize, -phi * baseSize),
+            new Vertex(phi * baseSize, 0, -baseSize), new Vertex(phi * baseSize, 0, baseSize),
+            new Vertex(-phi * baseSize, 0, -baseSize), new Vertex(-phi * baseSize, 0, baseSize)
+        };
+        
+        // Defining the 20 triangular faces
+        int[][] faces = {
+            {0, 11, 5}, {0, 5, 1}, {0, 1, 7}, {0, 7, 10}, {0, 10, 11},
+            {1, 5, 9}, {5, 11, 4}, {11, 10, 2}, {10, 7, 6}, {7, 1, 8},
+            {3, 9, 4}, {3, 4, 2}, {3, 2, 6}, {3, 6, 8}, {3, 8, 9},
+            {4, 9, 5}, {2, 4, 11}, {6, 2, 10}, {8, 6, 7}, {9, 8, 1}
+        };
+        
+        // Adding faces to icosahedron_coords
+        for (int[] face : faces) {
+            icosahedron_coords.add(new Vertex[]{vertices[face[0]], vertices[face[1]], vertices[face[2]]});
+        }
+        
+        return icosahedron_coords;
+    }
+
+
+    
+
 
 }
 
