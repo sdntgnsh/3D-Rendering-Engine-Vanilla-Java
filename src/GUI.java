@@ -628,7 +628,7 @@ public class GUI implements ActionListener, ChangeListener {
         }
 
         // Normalize vertices
-        double targetSize = Math.sqrt(30000) * 1.4;
+        double targetSize = Math.sqrt(30000);
         for (Polygon poly : result) {
             for (Vertex v : poly.vertex_array) {
                 double length = Math.sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
@@ -792,7 +792,7 @@ class CoordinateCreator {
 
     static List<Vertex[]> create_square_coords(int size){
         List<Vertex[]> Shape_Coords = new ArrayList<>(); 
-        int baseSize = (int)(size * 0.6);
+        int baseSize = (int)(size * 1);
                 // Adding coordinates to Shape_Coords
                 Shape_Coords.add(new Vertex[]{new Vertex(baseSize, baseSize, baseSize), // window wall
                                                 new Vertex(baseSize, baseSize, -baseSize),
@@ -833,7 +833,7 @@ class CoordinateCreator {
     static List<Vertex[]> create_triangle_coords(int size){
 
         List<Vertex[]> Triangle_coords = new ArrayList<>();
-        int baseSize = (int)(size * 0.6);
+        int baseSize = (int)(size * 1);
         // Adding coordinates to Triangle_coords
         Triangle_coords.add(new Vertex[]{new Vertex(baseSize, baseSize, baseSize),
                                         new Vertex(-baseSize, -baseSize, baseSize),
