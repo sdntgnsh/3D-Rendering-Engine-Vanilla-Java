@@ -12,6 +12,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 public class GUI implements ActionListener, ChangeListener {
+    private final int size = 200;
     private int clicks = 0, colorCounter = 0;
     private JLabel label = new JLabel("Number of clicks:  0");
     private JLabel WireFramelabel = new JLabel("Toggle WireFrame:  0");
@@ -211,14 +212,20 @@ public class GUI implements ActionListener, ChangeListener {
 
                 
             // Adding coordinates to Shape_Coords
-                if(clicks % 3 == 0){
-                    Shape_Coords = CoordinateCreator.create_triangle_coords(200);
+
+                
+                if(clicks % 4 == 0){
+                    Shape_Coords = CoordinateCreator.create_triangle_coords(size);
                 }
-                else if(clicks % 3 == 1){
-                    Shape_Coords = CoordinateCreator.create_square_coords(200);
+                else if(clicks % 4 == 1){
+                    Shape_Coords = CoordinateCreator.create_square_coords(size);
+                }
+                else if(clicks % 4 == 2){
+                    Shape_Coords = CoordinateCreator.create_octahedron_coords(size*2);
+                   
                 }
                 else{
-                    Shape_Coords = CoordinateCreator.create_icosahedron_coords(200);
+                     Shape_Coords = CoordinateCreator.create_icosahedron_coords(size);
                 }
                 Color colorArr[] = {new Color(205, 180, 219), new Color(255, 200, 221), new Color(255, 175, 204), new Color(189, 224, 254), new Color(162, 210, 255), new Color(202, 240, 248)};
                 Color colorArr2[] = {new Color(255, 173, 173), new Color(255, 214, 165), new Color(253, 255, 182), new Color(202, 255, 191),new Color(155, 246, 255),new Color(160, 196, 255), new Color(189, 178, 255)};
@@ -887,6 +894,32 @@ class CoordinateCreator {
         
         return icosahedron_coords;
     }
+
+    static List<Vertex[]> create_octahedron_coords(int size) {
+    List<Vertex[]> octaFaces = new ArrayList<>();
+    int baseSize = (int)(size * 0.6);
+
+    // Define vertices of the octahedron.
+    Vertex top    = new Vertex(0, 0, baseSize);
+    Vertex bottom = new Vertex(0, 0, -baseSize);
+    Vertex right  = new Vertex(baseSize, 0, 0);
+    Vertex left   = new Vertex(-baseSize, 0, 0);
+    Vertex front  = new Vertex(0, baseSize, 0);
+    Vertex back   = new Vertex(0, -baseSize, 0);
+
+    // Define the 8 triangular faces.
+    octaFaces.add(new Vertex[]{ top, front, right });
+    octaFaces.add(new Vertex[]{ top, right, back });
+    octaFaces.add(new Vertex[]{ top, back, left });
+    octaFaces.add(new Vertex[]{ top, left, front });
+    octaFaces.add(new Vertex[]{ bottom, right, front });
+    octaFaces.add(new Vertex[]{ bottom, back, right });
+    octaFaces.add(new Vertex[]{ bottom, left, back });
+    octaFaces.add(new Vertex[]{ bottom, front, left });
+    
+    return octaFaces;
+}
+
 
 
     
