@@ -3,6 +3,7 @@ import java.awt.event.*;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -265,73 +266,80 @@ public class GUI implements ActionListener, ChangeListener {
                 else{
 
                     BufferedImage img = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-
                     double[] zBuffer = new double[img.getWidth() * img.getHeight()];
-                    // initialize array with extremely far away depths
-                    for (int q = 0; q < zBuffer.length; q++) {
-                        zBuffer[q] = Double.NEGATIVE_INFINITY;
-                    }
+                    Arrays.fill(zBuffer, Double.NEGATIVE_INFINITY);
 
                     for (Polygon poly : polygon_list) {
-
-                        for(int i = 0; i < poly.number_of_sides; i++){
-                            poly.vertex_array.set(i, transform.transform(poly.vertex_array.get(i)));
-                            poly.vertex_array.set(i, new Vertex(poly.vertex_array.get(i).x + getWidth()/2, poly.vertex_array.get(i).y + getHeight() / 2, poly.vertex_array.get(i).z ));
-                        }
-
-
-
-                        int minX = (int) Double.POSITIVE_INFINITY;
-                        int maxX = (int) Double.NEGATIVE_INFINITY;
-                        int minY = (int) Double.POSITIVE_INFINITY;
-                        int maxY = (int) Double.NEGATIVE_INFINITY;
-
-                        for(int i = 0; i < poly.number_of_sides; i++){
-                            minX = (int)Math.min(minX, poly.vertex_array.get(i).x);
-                            maxX = (int)Math.max(maxX, poly.vertex_array.get(i).x);
-                            minY = (int)Math.min(minY, poly.vertex_array.get(i).y);
-                            maxY = (int)Math.max(maxY, poly.vertex_array.get(i).y);
-                        }
-
-                        minX = (int)Math.max(0, Math.ceil(minX));
-                        maxX = (int)Math.min(img.getWidth() - 1, Math.floor(maxX));
-                        minY = (int)Math.max(0, Math.ceil(minY));
-                        maxY = (int)Math.min(img.getHeight() - 1, Math.floor(maxY));
-                        
-                        double polyArea = 0.0;
+                        List<Vertex> rotatedVertices = new ArrayList<>();
                         for (int i = 0; i < poly.number_of_sides; i++) {
-                            int j = (i + 1) % poly.number_of_sides;  // Wrap-around for the last vertex
-                            polyArea += poly.vertex_array.get(i).x * poly.vertex_array.get(j).y;
-                            polyArea -= poly.vertex_array.get(j).x * poly.vertex_array.get(i).y;
+                            Vertex original = poly.vertex_array.get(i);
+                            Vertex rotated = transform.transform(original);
+                            rotatedVertices.add(rotated);
+                            // Translate the rotated vertex
+                            Vertex translated = new Vertex(
+                                rotated.x + getWidth()/2,
+                                rotated.y + getHeight()/2,
+                                rotated.z
+                            );
+                            poly.vertex_array.set(i, translated);
                         }
-                        polyArea = Math.abs(polyArea) / 2.0;
 
+                        // Compute normal using rotated vertices (before translation)
+                        Vertex v0 = rotatedVertices.get(0);
+                        Vertex v1 = rotatedVertices.get(1);
+                        Vertex v2 = rotatedVertices.get(2);
 
+                        Vertex ab = new Vertex(v1.x - v0.x, v1.y - v0.y, v1.z - v0.z);
+                        Vertex ac = new Vertex(v2.x - v0.x, v2.y - v0.y, v2.z - v0.z);
 
-                        Double baryArea[] = new Double[poly.number_of_sides];
+                        Vertex norm = new Vertex(
+                            ab.y * ac.z - ab.z * ac.y,
+                            ab.z * ac.x - ab.x * ac.z,
+                            ab.x * ac.y - ab.y * ac.x
+                        );
 
-                       
+                        double normalLength = Math.sqrt(norm.x * norm.x + norm.y * norm.y + norm.z * norm.z);
+                        if (normalLength != 0) {
+                            norm.x /= normalLength;
+                            norm.y /= normalLength;
+                            norm.z /= normalLength;
+                        } else {
+                            norm.x = 0; norm.y = 0; norm.z = 0;
+                        }
 
+                        // Compute shade factor (light direction: towards the viewer)
+                        double lightDirX = 0, lightDirY = 0, lightDirZ = 1;
+                        double dotProduct = norm.x * lightDirX + norm.y * lightDirY + norm.z * lightDirZ;
+                        double shade = Math.abs(dotProduct);
+                        Color shadedColor = getShade(poly.color, shade);
 
+                        // Determine bounding box
+                        int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
+                        int minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
+                        for (Vertex v : poly.vertex_array) {
+                            minX = Math.min(minX, (int) v.x);
+                            maxX = Math.max(maxX, (int) v.x);
+                            minY = Math.min(minY, (int) v.y);
+                            maxY = Math.max(maxY, (int) v.y);
+                        }
+                        minX = Math.max(0, (int) Math.ceil(minX));
+                        maxX = Math.min(img.getWidth()-1, (int) Math.floor(maxX));
+                        minY = Math.max(0, (int) Math.ceil(minY));
+                        maxY = Math.min(img.getHeight()-1, (int) Math.floor(maxY));
 
+                        // Check each pixel in the bounding box
                         for (int y = minY; y <= maxY; y++) {
                             for (int x = minX; x <= maxX; x++) {
-                                double[] inside = null;
-                                double[] inside2 = null;
-                                boolean inTriangle = false;
-                                boolean inTriangle2 = false;
-                                double epsilon = 1e-6;  // Use a small epsilon for floating-point comparisons
+                                boolean inTriangle = false, inTriangle2 = false;
+                                double[] inside = null, inside2 = null;
+                                double epsilon = 1e-6;
 
                                 if (poly.number_of_sides == 3) {
                                     inside = isPointInsideTriangle(x, y, poly.vertex_array.get(0), poly.vertex_array.get(1), poly.vertex_array.get(2));
-                                    // Check if point is inside the triangle:
                                     inTriangle = Math.abs(inside[0] - (inside[1] + inside[2] + inside[3])) < epsilon;
                                 } else if (poly.number_of_sides == 4) {
-                                    // First triangle: vertices 0,1,2
                                     inside = isPointInsideTriangle(x, y, poly.vertex_array.get(0), poly.vertex_array.get(1), poly.vertex_array.get(2));
                                     inTriangle = Math.abs(inside[0] - (inside[1] + inside[2] + inside[3])) < epsilon;
-                                    
-                                    // Second triangle: vertices 0,2,3
                                     inside2 = isPointInsideTriangle(x, y, poly.vertex_array.get(0), poly.vertex_array.get(2), poly.vertex_array.get(3));
                                     inTriangle2 = Math.abs(inside2[0] - (inside2[1] + inside2[2] + inside2[3])) < epsilon;
                                 }
@@ -339,40 +347,23 @@ public class GUI implements ActionListener, ChangeListener {
                                 if (inTriangle || inTriangle2) {
                                     double depth = 0.0;
                                     if (inTriangle) {
-                                        // Normalize barycentrics for triangle (0,1,2)
-                                        double b1 = inside[1] / inside[0];
-                                        double b2 = inside[2] / inside[0];
-                                        double b3 = inside[3] / inside[0];
-                                        depth = b1 * poly.vertex_array.get(0).z +
-                                                b2 * poly.vertex_array.get(1).z +
-                                                b3 * poly.vertex_array.get(2).z;
-                                    } 
-                                    else if (inTriangle2) {
-                                        // Normalize barycentrics for triangle (0,2,3)
-                                        double b1 = inside2[1] / inside2[0];
-                                        double b2 = inside2[2] / inside2[0];
-                                        double b3 = inside2[3] / inside2[0];
-                                        depth = b1 * poly.vertex_array.get(0).z +
-                                                b2 * poly.vertex_array.get(2).z +
-                                                b3 * poly.vertex_array.get(3).z;
+                                        double b1 = inside[1]/inside[0], b2 = inside[2]/inside[0], b3 = inside[3]/inside[0];
+                                        depth = b1*poly.vertex_array.get(0).z + b2*poly.vertex_array.get(1).z + b3*poly.vertex_array.get(2).z;
+                                    } else {
+                                        double b1 = inside2[1]/inside2[0], b2 = inside2[2]/inside2[0], b3 = inside2[3]/inside2[0];
+                                        depth = b1*poly.vertex_array.get(0).z + b2*poly.vertex_array.get(2).z + b3*poly.vertex_array.get(3).z;
                                     }
-                                    int zinx = y*img.getWidth() + x;
 
-                                    if(zBuffer[zinx] <= depth){
+                                    int zinx = y * img.getWidth() + x;
+                                    if (zBuffer[zinx] <= depth) {
                                         zBuffer[zinx] = depth;
-                                        img.setRGB(x, y, poly.color.getRGB());
+                                        img.setRGB(x, y, shadedColor.getRGB());
                                     }
-                                    // img.setRGB(x, y, poly.color.getRGB());
-
                                 }
                             }
                         }
-
-
-
                     }
-
-                    g2.drawImage(img, 0, 0, null);
+                    g2.drawImage(img, 0, 0, null);                
                 }
             }
         
@@ -638,6 +629,22 @@ public class GUI implements ActionListener, ChangeListener {
 
     private double triangleArea(double x1, double y1, double x2, double y2, double x3, double y3) {
         return Math.abs((x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / 2.0);
+    }
+
+    private Color getShade(Color color, double shade) {
+        double redLinear = Math.pow(color.getRed(), 2.4) * shade;
+        double greenLinear = Math.pow(color.getGreen(), 2.4) * shade;
+        double blueLinear = Math.pow(color.getBlue(), 2.4) * shade;
+
+        int red = (int) Math.pow(redLinear, 1/2.4);
+        int green = (int) Math.pow(greenLinear, 1/2.4);
+        int blue = (int) Math.pow(blueLinear, 1/2.4);
+
+        red = Math.min(255, Math.max(0, red));
+        green = Math.min(255, Math.max(0, green));
+        blue = Math.min(255, Math.max(0, blue));
+
+        return new Color(red, green, blue);
     }
 
 
