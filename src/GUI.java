@@ -14,6 +14,7 @@ import javax.swing.event.ChangeListener;
 public class GUI implements ActionListener, ChangeListener {
     private final int size = 200;
     private int clicks = 0, colorCounter = 0;
+    private int INFLATE_COUNTER = 1;
     private JLabel label = new JLabel("Number of clicks:  0");
     private JLabel WireFramelabel = new JLabel("Toggle WireFrame:  0");
     private JLabel ChangeColorLabel = new JLabel("Change Color:  0");
@@ -240,7 +241,7 @@ public class GUI implements ActionListener, ChangeListener {
                 }
 
                 if (isInflated) {
-                    for (int i = 0; i < 4; i ++)
+                    for (int i = 0; i < INFLATE_COUNTER; i ++)
                         polygon_list = inflate(polygon_list);
                 }
 
