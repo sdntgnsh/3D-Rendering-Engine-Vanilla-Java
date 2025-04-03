@@ -21,8 +21,8 @@ public class GUI implements ActionListener, ChangeListener {
     private JLabel label = new JLabel("Clicks:  0");
     private JLabel WireFramelabel = new JLabel("Toggle WireFrame:  0");
     private JLabel ChangeColorLabel = new JLabel("Change Color:  0");
-    private JLabel AutoRotateLabel = new JLabel("Toggle Auto Rotate(T)");
-    private JLabel ToggleShapeLabel = new JLabel("Toggle Shapes(F)");
+    private JLabel AutoRotateLabel = new JLabel("Toggle Auto Rotate (T)");
+    private JLabel MoveInstructionsLabel = new JLabel("Move (WASD or Arrow Keys)");
     private JLabel ShapesListLabel;
     private JFrame frame;
     private JButton ClickButton, ResetButton, ExitButton, AutoRotateButton, ToggleWireframeButton, ChangeColorButton;
@@ -46,6 +46,8 @@ public class GUI implements ActionListener, ChangeListener {
     private JButton InflateButton;
     private boolean isInflated = false;
 
+    private boolean wasAutoRotating = false;
+
     // Shapes list
     public String[] ShapesList = {"TetraHedron", "Cube", "Sphere", "Octahedron", "Icosahedron", "Torus", "Mobius Strip", "DNA", "Tesseract", "Saturn"};
 
@@ -61,21 +63,21 @@ public class GUI implements ActionListener, ChangeListener {
         frame.getContentPane().setBackground(Color.BLACK);
 
         // Click, Reset, and Exit Buttons
-        ClickButton = new JButton("Toggle Shape (F)");
+        ClickButton = new JButton("Toggle Shape (Q/E)");
         ResetButton = new JButton("Reset (R)");
         ExitButton = new JButton("Exit Application (Esc)");
-        ToggleWireframeButton = new JButton("Toggle WireFrame (Q)");
-        ChangeColorButton = new JButton("Change Color (E)");
+        ToggleWireframeButton = new JButton("Toggle WireFrame (F)");
+        ChangeColorButton = new JButton("Change Color (C)");
         InflateButton = new JButton("Inflate (I)");
         AutoRotateButton = new JButton("");
         Dimension buttonSize = new Dimension(screenSize.width / 6, screenSize.width / 50);
-        ClickButton.setPreferredSize(buttonSize);
+        ClickButton.setPreferredSize(new Dimension(buttonSize.width, buttonSize.height * 3 / 4));
         ResetButton.setPreferredSize(buttonSize);
         ExitButton.setPreferredSize(buttonSize);
         ChangeColorButton.setPreferredSize(buttonSize);
         ToggleWireframeButton.setPreferredSize(buttonSize);
         InflateButton.setPreferredSize(buttonSize);
-        AutoRotateButton.setPreferredSize(new Dimension(20, 20));
+        AutoRotateButton.setPreferredSize(new Dimension(20, 20)); // Keep AutoRotate small
 
         ClickButton.setBackground(Color.LIGHT_GRAY);
         ResetButton.setBackground(Color.LIGHT_GRAY);
@@ -88,9 +90,11 @@ public class GUI implements ActionListener, ChangeListener {
         AutoRotateButton.addActionListener(this);
         // AutoRotateButton.setText("↺");
 
-        //Shapes Drop Down list
+        // Shapes Drop Down list
         ShapesListBox = new JComboBox<>(ShapesList);
-        ShapesListBox.setPreferredSize(buttonSize);
+        ShapesListBox.setPreferredSize(new Dimension(buttonSize.width, buttonSize.height / 2));
+        ShapesListBox.setMinimumSize(new Dimension(buttonSize.width, buttonSize.height / 2));
+        ShapesListBox.setMaximumSize(new Dimension(buttonSize.width, buttonSize.height / 2));
 
         ShapesListLabel = new JLabel("Select Shape:");
         ShapesListBox.setBackground(Color.LIGHT_GRAY);
@@ -107,8 +111,8 @@ public class GUI implements ActionListener, ChangeListener {
         ChangeColorButton.addActionListener(this);
         ShapesListBox.addActionListener(this);
         // Sliders for XZ and XY movement
-        xzSlider = new JSlider(JSlider.HORIZONTAL, -50, 50, 0);
-        xySlider = new JSlider(JSlider.VERTICAL, -50, 50, 0);
+        xzSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
+        xySlider = new JSlider(JSlider.VERTICAL, -0, 100, 50);
 
         xzPanel = new JPanel(new BorderLayout());
         xzPanel.setBackground(Color.GRAY);
@@ -141,12 +145,16 @@ public class GUI implements ActionListener, ChangeListener {
             ShapesListBox.setFocusable(false);  // Remove focus so keybindings work separately
             frame.requestFocusInWindow();  // Give focus back to the main window
         });
-        inputMap.put(KeyStroke.getKeyStroke("F"), "toggleShape");
+
+        inputMap.put(KeyStroke.getKeyStroke("E"), "forwardToggleShape");
+        inputMap.put(KeyStroke.getKeyStroke("Q"), "backwardToggleShape");
         inputMap.put(KeyStroke.getKeyStroke("R"), "reset");
         inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), "exitApp");
-        inputMap.put(KeyStroke.getKeyStroke("Q"), "toggleWireframe");
+        inputMap.put(KeyStroke.getKeyStroke("F"), "toggleWireframe");
         inputMap.put(KeyStroke.getKeyStroke("T"), "toggleAutoRotate");
-        inputMap.put(KeyStroke.getKeyStroke("E"), "changeColor");
+        inputMap.put(KeyStroke.getKeyStroke("pressed SHIFT"), "pauseAutoRotate");
+        inputMap.put(KeyStroke.getKeyStroke("released SHIFT"), "resumeAutoRotate");
+        inputMap.put(KeyStroke.getKeyStroke("C"), "changeColor");
         inputMap.put(KeyStroke.getKeyStroke("I"), "inflate");
 
         actionMap.put("inflate", new AbstractAction() {
@@ -156,10 +164,22 @@ public class GUI implements ActionListener, ChangeListener {
             }
         });
 
-        actionMap.put("toggleShape", new AbstractAction() {
+        actionMap.put("forwardToggleShape", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ClickButton.doClick();
+                renderPanel.repaint();
+                // Cycle through shapes
+                clicks = (clicks + 1) % ShapesList.length;
+                ShapesListBox.setSelectedIndex(clicks); // update dropdown selection
+            }
+        });
+        actionMap.put("backwardToggleShape", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                renderPanel.repaint();
+                // Cycle through shapes
+                clicks = (clicks - 1 + ShapesList.length) % ShapesList.length;
+                ShapesListBox.setSelectedIndex(clicks); // update dropdown selection
             }
         });
 
@@ -196,6 +216,30 @@ public class GUI implements ActionListener, ChangeListener {
                 AutoRotateButton.doClick();
             }
         });
+
+        // FIX THISSSS!!!!!!!!!!!!!!!!!
+        {
+            actionMap.put("pauseAutoRotate", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if (autoRotationEnabled) { // If auto-rotate was ON, store its state
+                        wasAutoRotating = true;
+                        autoRotateTimer.stop();
+                    }
+                }
+            });
+
+            // Action when SHIFT is released (Resume Auto-Rotate if it was ON)
+            actionMap.put("resumeAutoRotate", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if (wasAutoRotating) { // If auto-rotate was ON before Shift, resume it
+                        autoRotateTimer.start();
+                    }
+                    wasAutoRotating = false; // Reset state
+                }
+            });
+        }
 
         // Add mouse wheel listener for XZ slider
         xzSlider.addMouseWheelListener(new MouseWheelListener() {
@@ -424,8 +468,19 @@ public class GUI implements ActionListener, ChangeListener {
             }
 
         };
-        xySlider.addChangeListener(e -> renderPanel.repaint());
-        xzSlider.addChangeListener(e -> renderPanel.repaint());
+        // Add change listeners for wrap-around effect
+        xzSlider.addChangeListener(e -> {
+            // int value = xzSlider.getValue();
+            // xzSlider.setValue((value + 101) % 101); // Wraps around using mod
+            renderPanel.repaint();
+        });
+
+        xySlider.addChangeListener(e -> {
+            // int value = xySlider.getValue();
+            // xySlider.setValue((value + 101) % 101);
+            renderPanel.repaint();
+        });
+
         renderPanel.setLayout(new BorderLayout());
         frame.addComponentListener(new ComponentAdapter() {
             public void componentResized(ComponentEvent e) {
@@ -436,27 +491,49 @@ public class GUI implements ActionListener, ChangeListener {
         });
 
         // Panel for buttons (RIGHT SIDE)
+        // 1) Your main button panel with GridLayout
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(6, 1, 20, 20)); //buttons stacked vertically
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20)); // Padding
+        buttonPanel.setLayout(new GridLayout(6, 1, 20, 20));
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
+        buttonPanel.setBackground(Color.GRAY);
+        // Create a sub-panel for Toggle Shape and the dropdown with a 1:3 ratio vertically
+        JPanel shapePanel = new JPanel(new GridBagLayout());
+        shapePanel.setBackground(Color.GRAY);
 
-        // buttonPanel.add(ClickButton);
-        buttonPanel.add(ShapesListBox);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.insets = new Insets(0, 0, 0, 0);
+
+        // Add the Toggle Shape button (1 part)
+        gbc.gridy = 0;
+        gbc.weighty = 3;  // 1/4 of the height
+        shapePanel.add(ClickButton, gbc);
+
+        // Add the dropdown (3 parts)
+        gbc.gridy = 1;
+        gbc.weighty = 1;  // 3/4 of the height
+        shapePanel.add(ShapesListBox, gbc);
+
+        // 3) Add all components to buttonPanel
+        // First cell: shapePanel (toggle button + dropdown)
+        buttonPanel.add(shapePanel);
+
+        // Next cells: your other buttons
         buttonPanel.add(ToggleWireframeButton);
         buttonPanel.add(ChangeColorButton);
         buttonPanel.add(ResetButton);
         buttonPanel.add(InflateButton);
         buttonPanel.add(ExitButton);
-        buttonPanel.setBackground(Color.GRAY);
 
         // Panel for labels (TOP)
-        AutoRotateLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        // ToggleShapeLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        // AutoRotateLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        MoveInstructionsLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         JPanel topPanel = new JPanel(new GridLayout(1, 2, 20, 20));
         topPanel.setBorder(BorderFactory.createEmptyBorder(7, 7, 7, 7)); // Padding
+        topPanel.add(MoveInstructionsLabel);
         topPanel.add(AutoRotateLabel);
-        topPanel.add(ToggleShapeLabel);
         // topPanel.add(label);
         // topPanel.add(WireFramelabel);
         // topPanel.add(ChangeColorLabel);
@@ -514,8 +591,8 @@ public class GUI implements ActionListener, ChangeListener {
             totalRotationAngleXY += AUTO_ROTATION_SPEED;
 
             // Map angles to slider range (-50 to 50) using modulo
-            xzSlider.setValue((int) ((totalRotationAngleXZ / 5) % 100 - 50));
-            xySlider.setValue((int) ((totalRotationAngleXY / 5) % 100 - 50));
+            xzSlider.setValue((int) ((totalRotationAngleXZ / 5) % 100));
+            xySlider.setValue((int) ((totalRotationAngleXY / 5) % 100));
 
             isAutoRotating = false;
             renderPanel.repaint();
@@ -713,7 +790,7 @@ public class GUI implements ActionListener, ChangeListener {
             ChangeColorLabel.setText("Change Color:  " + colorCounter);
         }
         if (e.getSource() == ResetButton) {
-            clicks = 0;
+            // clicks = 0;
             xzSlider.setValue(0);
             xySlider.setValue(0);
         }
