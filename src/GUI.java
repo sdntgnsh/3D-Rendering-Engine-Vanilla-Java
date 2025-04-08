@@ -14,7 +14,7 @@ import javax.swing.event.ChangeListener;
 public class GUI implements ActionListener, ChangeListener {
     private final int size = 200;
     private int clicks = 0, colorCounter = 0;
-    private int INFLATE_COUNTER = 1;
+    private int INFLATE_COUNTER = 4;
     private JLabel label = new JLabel("Number of clicks:  0");
     private JLabel WireFramelabel = new JLabel("Toggle WireFrame:  0");
     private JLabel ChangeColorLabel = new JLabel("Change Color:  0");
@@ -215,30 +215,32 @@ public class GUI implements ActionListener, ChangeListener {
             // Adding coordinates to Shape_Coords
 
                 
-                if(clicks % 8 == 0){
+                if (clicks % 13 == 0) {
                     Shape_Coords = CoordinateCreator.create_triangle_coords(size);
-                }
-                else if(clicks % 8 == 1){
+                } else if (clicks % 13 == 1) {
                     Shape_Coords = CoordinateCreator.create_square_coords(size);
-                }
-                else if(clicks % 8 == 2){
-                    Shape_Coords = CoordinateCreator.create_octahedron_coords(size*2);
-                }
-                else if(clicks % 8 == 3){
-                     Shape_Coords = CoordinateCreator.create_icosahedron_coords(size);
-                }
-                else if(clicks % 8 == 4){
+                } else if (clicks % 13 == 2) {
+                    Shape_Coords = CoordinateCreator.create_octahedron_coords(size * 2);
+                } else if (clicks % 13 == 3) {
+                    Shape_Coords = CoordinateCreator.create_icosahedron_coords(size);
+                } else if (clicks % 13 == 4) {
                     Shape_Coords = CoordinateCreator.create_torus_coords(size);
-                }
-                else if(clicks % 8 == 5){
-                    Shape_Coords = CoordinateCreator.create_mobius_strip_coords(size*2);
-                }
-                else if(clicks % 8 == 6){
+                } else if (clicks % 13 == 5) {
+                    Shape_Coords = CoordinateCreator.create_mobius_strip_coords(size * 2);
+                } else if (clicks % 13 == 6) {
                     Shape_Coords = CoordinateCreator.create_dna_coords(size);
-                }
-                else if(clicks % 8 == 7){
+                } else if (clicks % 13 == 7) {
                     Shape_Coords = CoordinateCreator.create_tesseract_coords(size);
-                }
+                } else if (clicks % 13 == 8) {
+                    Shape_Coords = CoordinateCreator.create_trefoil_knot_coords(size);
+                } else if (clicks % 13 == 9) {
+                    Shape_Coords = CoordinateCreator.create_hyperbolic_paraboloid_coords(size);
+                } else if (clicks % 13 == 10) {
+                    Shape_Coords = CoordinateCreator.create_flowing_waves_coords(size);
+                } else if (clicks % 13 == 11) {
+                    Shape_Coords = CoordinateCreator.create_catenoid_coords(size);
+                } 
+
                 Color colorArr[] = {new Color(205, 180, 219), new Color(255, 200, 221), new Color(255, 175, 204), new Color(189, 224, 254), new Color(162, 210, 255), new Color(202, 240, 248)};
                 Color colorArr2[] = {new Color(255, 173, 173), new Color(255, 214, 165), new Color(253, 255, 182), new Color(202, 255, 191),new Color(155, 246, 255),new Color(160, 196, 255), new Color(189, 178, 255)};
 
@@ -651,18 +653,18 @@ public class GUI implements ActionListener, ChangeListener {
         }
 
         // Normalize vertices
-        double targetSize = Math.sqrt(30000);
-        for (Polygon poly : result) {
-            for (Vertex v : poly.vertex_array) {
-                double length = Math.sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
-                if (length > 0) {
-                    double scale = targetSize / length;
-                    v.x *= scale;
-                    v.y *= scale;
-                    v.z *= scale;
-                }
-            }
-        }
+        // double targetSize = Math.sqrt(30000);
+        // for (Polygon poly : result) {
+        //     for (Vertex v : poly.vertex_array) {
+        //         double length = Math.sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+        //         if (length > 0) {
+        //             double scale = targetSize / length;
+        //             v.x *= scale;
+        //             v.y *= scale;
+        //             v.z *= scale;
+        //         }
+        //     }
+        // }
         System.out.println("Created " + result.size() + " inflated polygons"); // Debug
         return result;
     }
@@ -877,7 +879,7 @@ class CoordinateCreator {
     }
 
 
-        static List<Vertex[]> create_icosahedron_coords(int size){
+        static List<Vertex[]> create_icosahedron_coords(int size) {
         List<Vertex[]> icosahedron_coords = new ArrayList<>();
         double phi = (1 + Math.sqrt(5)) / 2; // Golden ratio
         int baseSize = (int)(size * 0.6);
@@ -1104,8 +1106,413 @@ static List<Vertex[]> create_mobius_strip_coords(int size) {
     return dnaCoords;
 }
 
+static List<Vertex[]> create_trefoil_knot_coords(int size) {
+    List<Vertex[]> trefoilKnotCoords = new ArrayList<>();
+    int segU = 120; // Resolution along knot path (higher for smoother knot)
+    int segV = 20;  // Resolution around tube cross-section
+    double scale = size * 0.5; // Scaling factor
+    double du = 2 * Math.PI / segU;
+    double dv = 2 * Math.PI / segV;
+    double tubeRadius = 0.3; // Radius of tube
+    Vertex[][] grid = new Vertex[segU][segV];
+    
+    for (int i = 0; i < segU; i++) {
+        double u = i * du;
+        
+        // Trefoil knot parametric equations (central curve)
+        double r = 2 + Math.cos(3 * u);
+        double x0 = r * Math.cos(2 * u);
+        double y0 = r * Math.sin(2 * u);
+        double z0 = Math.sin(3 * u);
+        
+        // Calculate tangent vector (normalized)
+        // Analytical derivative of trefoil knot equations
+        double dx = -3 * Math.sin(3 * u) * Math.cos(2 * u) - 2 * (2 + Math.cos(3 * u)) * Math.sin(2 * u);
+        double dy = -3 * Math.sin(3 * u) * Math.sin(2 * u) + 2 * (2 + Math.cos(3 * u)) * Math.cos(2 * u);
+        double dz = 3 * Math.cos(3 * u);
+        
+        // Normalize tangent vector
+        double lenT = Math.sqrt(dx*dx + dy*dy + dz*dz);
+        double tx = dx / lenT;
+        double ty = dy / lenT;
+        double tz = dz / lenT;
+        
+        // Create a normal vector using a reference direction and tangent
+        // Use z-axis as reference for simplicity
+        double rx = 0;
+        double ry = 0;
+        double rz = 1;
+        
+        // Calculate normal using cross product: (r × t) × t
+        // First cross product: r × t
+        double cx = ry * tz - rz * ty;
+        double cy = rz * tx - rx * tz;
+        double cz = rx * ty - ry * tx;
+        
+        // Second cross product: (r × t) × t
+        double nx = cy * tz - cz * ty;
+        double ny = cz * tx - cx * tz;
+        double nz = cx * ty - cy * tx;
+        
+        // Normalize normal vector
+        double lenN = Math.sqrt(nx*nx + ny*ny + nz*nz);
+        nx /= lenN;
+        ny /= lenN;
+        nz /= lenN;
+        
+        // Calculate binormal using cross product: t × n
+        double bx = ty * nz - tz * ny;
+        double by = tz * nx - tx * nz;
+        double bz = tx * ny - ty * nx;
+        
+        // Create vertices around the cross-section
+        for (int j = 0; j < segV; j++) {
+            double v = j * dv;
+            double cosV = Math.cos(v);
+            double sinV = Math.sin(v);
+            
+            // Point on tube's circular cross-section
+            double px = x0 + tubeRadius * (nx * cosV + bx * sinV);
+            double py = y0 + tubeRadius * (ny * cosV + by * sinV);
+            double pz = z0 + tubeRadius * (nz * cosV + bz * sinV);
+            
+            // Apply scaling
+            px *= scale;
+            py *= scale;
+            pz *= scale;
+            
+            grid[i][j] = new Vertex(px, py, pz);
+        }
+    }
+    
+    // Create quadrilaterals between adjacent points in the grid
+    for (int i = 0; i < segU; i++) {
+        int nextI = (i + 1) % segU;
+        for (int j = 0; j < segV; j++) {
+            int nextJ = (j + 1) % segV;
+            Vertex v00 = grid[i][j];
+            Vertex v10 = grid[nextI][j];
+            Vertex v11 = grid[nextI][nextJ];
+            Vertex v01 = grid[i][nextJ];
+            trefoilKnotCoords.add(new Vertex[]{v00, v10, v11, v01});
+        }
+    }
+    return trefoilKnotCoords;
+}
 
+static List<Vertex[]> create_hyperbolic_paraboloid_coords(int size) {
+    List<Vertex[]> saddleCoords = new ArrayList<>();
+    int gridSize = 20; // Resolution of the grid
+    double scale = size * 1; // Scaling factor
+    double step = 2.0 / gridSize; // Step size for grid points
 
+    // Generate vertices for the hyperbolic paraboloid
+    Vertex[][] grid = new Vertex[gridSize + 1][gridSize + 1];
+    for (int i = 0; i <= gridSize; i++) {
+        double u = -1.0 + i * step; // u ranges from -1 to 1
+        for (int j = 0; j <= gridSize; j++) {
+            double v = -1.0 + j * step; // v ranges from -1 to 1
+            double x = u * scale;
+            double y = v * scale;
+            double z = (u * u - v * v) * scale * 0.5; // Hyperbolic paraboloid equation
+            grid[i][j] = new Vertex(x, y, z);
+        }
+    }
+    
+
+    // Create quadrilateral faces from the grid
+    for (int i = 0; i < gridSize; i++) {
+        for (int j = 0; j < gridSize; j++) {
+            Vertex v00 = grid[i][j];
+            Vertex v01 = grid[i][j + 1];
+            Vertex v10 = grid[i + 1][j];
+            Vertex v11 = grid[i + 1][j + 1];
+            saddleCoords.add(new Vertex[]{v00, v01, v11, v10});
+        }
+    }
+
+    return saddleCoords;
+}
+
+    static List<Vertex[]> create_flowing_waves_coords(int size) {
+        List<Vertex[]> waveCoords = new ArrayList<>();
+        double scale = size * 0.9;
+        
+        // Higher resolution for smoother appearance
+        int gridSize = 60;
+        
+        // Create the grid of vertices
+        Vertex[][] vertices = new Vertex[gridSize + 1][gridSize + 1];
+        
+        // Smooth wave parameters
+        double amplitude1 = 0.2 * scale;
+        double amplitude2 = 0.15 * scale;
+        double frequency1 = 2.0;
+        double frequency2 = 3.0;
+        double flowSpeed = 0.9;  // Controls how much the waves "flow" across the surface
+        
+        // Create vertices with smooth flowing wave function
+        for (int i = 0; i <= gridSize; i++) {
+            double x = -scale + (2 * scale * i) / gridSize;
+            
+            for (int j = 0; j <= gridSize; j++) {
+                double y = -scale + (2 * scale * j) / gridSize;
+                
+                // Distance from center for radial effect
+                double d = Math.sqrt(x*x + y*y) / scale;
+                double angle = Math.atan2(y, x);
+                
+                // Create smooth flowing waves - main undulating surface
+                double wave1 = amplitude1 * Math.sin(frequency1 * (x + 0.5 * Math.sin(frequency2 * y)));
+                double wave2 = amplitude2 * Math.sin(frequency2 * (y + 0.5 * Math.sin(frequency1 * x)));
+                
+                // Add flowing spiral wave component - creates beautiful organic curves
+                double spiral = 0.1 * scale * Math.sin(8.0 * angle + d * 5.0);
+                
+                // Blend multiple wave patterns for a complex but smooth appearance
+                double z = wave1 + wave2 + spiral;
+                
+                // Add gentle height decay near edges for a natural boundary
+                double edgeFactor = 1.0 - Math.pow(Math.min(1.0, d * 0.8), 4.0);
+                z *= edgeFactor;
+                
+                // Add very subtle high-frequency detail for visual interest without spikes
+                double detail = 0.02 * scale * Math.sin(x * 10) * Math.sin(y * 10) * edgeFactor;
+                z += detail;
+                
+                vertices[i][j] = new Vertex(x, y, z);
+            }
+        }
+        
+        // Apply smoothing pass to ensure gentle transitions
+        smoothVertices(vertices, gridSize);
+        
+        // Create triangular faces from the grid
+        for (int i = 0; i < gridSize; i++) {
+            for (int j = 0; j < gridSize; j++) {
+                Vertex v00 = vertices[i][j];
+                Vertex v10 = vertices[i+1][j];
+                Vertex v01 = vertices[i][j+1];
+                Vertex v11 = vertices[i+1][j+1];
+                
+                // Add two triangles to form a quad
+                waveCoords.add(new Vertex[]{v00, v10, v01});
+                waveCoords.add(new Vertex[]{v10, v11, v01});
+            }
+        }
+        
+        return waveCoords;
+    }
+    
+    // Helper method to smooth a vertex grid, ensuring no sharp transitions
+    private static void smoothVertices(Vertex[][] vertices, int gridSize) {
+        // Create a temporary copy of the vertices
+        Vertex[][] temp = new Vertex[gridSize + 1][gridSize + 1];
+        for (int i = 0; i <= gridSize; i++) {
+            for (int j = 0; j <= gridSize; j++) {
+                temp[i][j] = new Vertex(vertices[i][j].x, vertices[i][j].y, vertices[i][j].z);
+            }
+        }
+        
+        // Apply a simple gaussian-like smoothing kernel (excluding edges)
+        for (int i = 1; i < gridSize; i++) {
+            for (int j = 1; j < gridSize; j++) {
+                // Center point has highest weight, neighbors have lower weight
+                double z = vertices[i][j].z * 0.4;
+                z += vertices[i-1][j].z * 0.1;
+                z += vertices[i+1][j].z * 0.1;
+                z += vertices[i][j-1].z * 0.1;
+                z += vertices[i][j+1].z * 0.1;
+                z += vertices[i-1][j-1].z * 0.05;
+                z += vertices[i-1][j+1].z * 0.05;
+                z += vertices[i+1][j-1].z * 0.05;
+                z += vertices[i+1][j+1].z * 0.05;
+                
+                temp[i][j].z = z;
+            }
+        }
+        
+        // Copy the smoothed version back
+        for (int i = 1; i < gridSize; i++) {
+            for (int j = 1; j < gridSize; j++) {
+                vertices[i][j].z = temp[i][j].z;
+            }
+        }
+    }
+
+    static List<Vertex[]> create_sphere_coords(int size) {
+        List<Vertex[]> sphereFaces = new ArrayList<>();
+        int latitudeBands = 20;
+        int longitudeBands = 20;
+        double radius = size * 0.6;
+
+        // Create vertices
+        Vertex[][] vertices = new Vertex[latitudeBands + 1][longitudeBands + 1];
+        for (int lat = 0; lat <= latitudeBands; lat++) {
+            double theta = lat * Math.PI / latitudeBands; // Angle from top (0) to bottom (PI)
+            double sinTheta = Math.sin(theta);
+            double cosTheta = Math.cos(theta);
+
+            for (int lon = 0; lon <= longitudeBands; lon++) {
+                double phi = lon * 2 * Math.PI / longitudeBands; // Angle around the Z axis (0 to 2PI)
+                double sinPhi = Math.sin(phi);
+                double cosPhi = Math.cos(phi);
+
+                double x = radius * cosPhi * sinTheta;
+                double y = radius * sinPhi * sinTheta;
+                double z = radius * cosTheta;
+                vertices[lat][lon] = new Vertex(x, y, z);
+            }
+        }
+
+        // Create faces (quads, composed of two triangles for rendering)
+        for (int lat = 0; lat < latitudeBands; lat++) {
+            for (int lon = 0; lon < longitudeBands; lon++) {
+                Vertex v1 = vertices[lat][lon];         // Top-left
+                Vertex v2 = vertices[lat + 1][lon];     // Bottom-left
+                Vertex v3 = vertices[lat + 1][lon + 1]; // Bottom-right
+                Vertex v4 = vertices[lat][lon + 1];     // Top-right
+
+                // Add two triangles for the quad face
+                sphereFaces.add(new Vertex[]{v1, v2, v4}); // Triangle 1 (v1, v2, v4)
+                sphereFaces.add(new Vertex[]{v2, v3, v4}); // Triangle 2 (v2, v3, v4)
+            }
+        }
+
+        return sphereFaces;
+    }
+
+    static List<Vertex[]> create_catenoid_coords(int size) {
+        List<Vertex[]> catenoidCoords = new ArrayList<>();
+        double scale = size * 0.8;
+        
+        // Parameters for the catenoid (a minimal surface)
+        int radialSegments = 40;  // Resolution around the circle
+        int heightSegments = 30;  // Resolution along the height
+        
+        // Catenoid parameters
+        double c = scale * 0.5;  // Parameter controlling the "waist" size
+        double height = scale * 1.6;  // Total height of the catenoid
+        
+        // Generate vertices grid
+        Vertex[][] vertices = new Vertex[radialSegments + 1][heightSegments + 1];
+        
+        for (int i = 0; i <= radialSegments; i++) {
+            double u = (i * 2.0 * Math.PI) / radialSegments;  // Angle around the surface (0 to 2π)
+            
+            for (int j = 0; j <= heightSegments; j++) {
+                double v = height * (j / (double)heightSegments - 0.5);  // Position along height (-height/2 to height/2)
+                
+                // Catenoid parametric equation: (c*cosh(v/c)*cos(u), c*cosh(v/c)*sin(u), v)
+                // where cosh is the hyperbolic cosine
+                double r = c * Math.cosh(v / c);  // Radius at this height
+                
+                double x = r * Math.cos(u);
+                double y = r * Math.sin(u);
+                double z = v;
+                
+                vertices[i][j] = new Vertex(x, y, z);
+            }
+        }
+        
+        // Create triangular faces
+        for (int i = 0; i < radialSegments; i++) {
+            for (int j = 0; j < heightSegments; j++) {
+                int i1 = i;
+                int i2 = (i + 1) % radialSegments;
+                int j1 = j;
+                int j2 = j + 1;
+                
+                // Get the four corner vertices of this grid cell
+                Vertex v00 = vertices[i1][j1];
+                Vertex v10 = vertices[i2][j1];
+                Vertex v01 = vertices[i1][j2];
+                Vertex v11 = vertices[i2][j2];
+                
+                // Create two triangular faces
+                catenoidCoords.add(new Vertex[]{v00, v10, v01});
+                catenoidCoords.add(new Vertex[]{v10, v11, v01});
+            }
+        }
+        
+        // Add decorative rings at regular intervals for visual interest
+        int numRings = 5;
+        double ringRadius = scale * 0.01;
+        
+        for (int ring = 0; ring < numRings; ring++) {
+            // Position rings evenly along the height
+            double v = height * (ring / (double)(numRings - 1) - 0.5);
+            double r = c * Math.cosh(v / c);  // Radius of the catenoid at this height
+            
+            // Create a torus (ring) at this position
+            int ringSegments = 12;  // Resolution around the ring's tube
+            
+            for (int i = 0; i < radialSegments; i++) {
+                double u1 = (i * 2.0 * Math.PI) / radialSegments;
+                double u2 = ((i + 1) * 2.0 * Math.PI) / radialSegments;
+                
+                double x1 = r * Math.cos(u1);
+                double y1 = r * Math.sin(u1);
+                double z1 = v;
+                
+                double x2 = r * Math.cos(u2);
+                double y2 = r * Math.sin(u2);
+                double z2 = v;
+                
+                // Create normal vectors for the ring tube
+                double nx1 = Math.cos(u1);
+                double ny1 = Math.sin(u1);
+                double nx2 = Math.cos(u2);
+                double ny2 = Math.sin(u2);
+                
+                // Create tube around the ring
+                for (int j = 0; j < ringSegments; j++) {
+                    double angle1 = (j * 2.0 * Math.PI) / ringSegments;
+                    double angle2 = ((j + 1) * 2.0 * Math.PI) / ringSegments;
+                    
+                    double cosA1 = Math.cos(angle1);
+                    double sinA1 = Math.sin(angle1);
+                    double cosA2 = Math.cos(angle2);
+                    double sinA2 = Math.sin(angle2);
+                    
+                    // First ring point
+                    Vertex p1 = new Vertex(
+                        x1 + ringRadius * (cosA1 * nx1),
+                        y1 + ringRadius * (cosA1 * ny1),
+                        z1 + ringRadius * sinA1
+                    );
+                    
+                    // Second ring point
+                    Vertex p2 = new Vertex(
+                        x1 + ringRadius * (cosA2 * nx1),
+                        y1 + ringRadius * (cosA2 * ny1),
+                        z1 + ringRadius * sinA2
+                    );
+                    
+                    // Third ring point
+                    Vertex p3 = new Vertex(
+                        x2 + ringRadius * (cosA1 * nx2),
+                        y2 + ringRadius * (cosA1 * ny2),
+                        z2 + ringRadius * sinA1
+                    );
+                    
+                    // Fourth ring point
+                    Vertex p4 = new Vertex(
+                        x2 + ringRadius * (cosA2 * nx2),
+                        y2 + ringRadius * (cosA2 * ny2),
+                        z2 + ringRadius * sinA2
+                    );
+                    
+                    // Create two triangular faces
+                    catenoidCoords.add(new Vertex[]{p1, p3, p2});
+                    catenoidCoords.add(new Vertex[]{p2, p3, p4});
+                }
+            }
+        }
+        
+        return catenoidCoords;
+    }
+    
 
 }
 
@@ -1138,3 +1545,4 @@ class Matrix3 {
         );
     }
 }
+
